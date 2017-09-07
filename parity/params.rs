@@ -41,7 +41,7 @@ pub enum SpecType {
 
 impl Default for SpecType {
 	fn default() -> Self {
-		SpecType::Foundation
+		SpecType::Tobalaba
 	}
 }
 
@@ -346,7 +346,7 @@ mod tests {
 
 	#[test]
 	fn test_spec_type_default() {
-		assert_eq!(SpecType::Foundation, SpecType::default());
+		assert_eq!(SpecType::Tobalaba, SpecType::default());
 	}
 
 	#[test]
