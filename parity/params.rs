@@ -31,6 +31,7 @@ pub enum SpecType {
 	Morden,
 	Ropsten,
 	Kovan,
+	Tobalaba,
 	Olympic,
 	Classic,
 	Expanse,
@@ -54,6 +55,7 @@ impl str::FromStr for SpecType {
 			"morden" | "classic-testnet" => SpecType::Morden,
 			"ropsten" => SpecType::Ropsten,
 			"kovan" | "testnet" => SpecType::Kovan,
+			"tobalaba" => SpecType::Tobalaba,
 			"olympic" => SpecType::Olympic,
 			"expanse" => SpecType::Expanse,
 			"dev" => SpecType::Dev,
@@ -73,6 +75,7 @@ impl fmt::Display for SpecType {
 			SpecType::Classic => "classic",
 			SpecType::Expanse => "expanse",
 			SpecType::Kovan => "kovan",
+			SpecType::Tobalaba => "tobalaba",
 			SpecType::Dev => "dev",
 			SpecType::Custom(ref custom) => custom,
 		})
@@ -90,6 +93,7 @@ impl SpecType {
 			SpecType::Classic => Ok(ethereum::new_classic(cache_dir)),
 			SpecType::Expanse => Ok(ethereum::new_expanse(cache_dir)),
 			SpecType::Kovan => Ok(ethereum::new_kovan(cache_dir)),
+			SpecType::Tobalaba => Ok(ethereum::new_tobalaba(cache_dir)),
 			SpecType::Dev => Ok(Spec::new_instant()),
 			SpecType::Custom(ref filename) => {
 				let file = fs::File::open(filename).map_err(|e| format!("Could not load specification file at {}: {}", filename, e))?;
@@ -332,6 +336,7 @@ mod tests {
 		assert_eq!(SpecType::Foundation, "foundation".parse().unwrap());
 		assert_eq!(SpecType::Kovan, "testnet".parse().unwrap());
 		assert_eq!(SpecType::Kovan, "kovan".parse().unwrap());
+		assert_eq!(SpecType::Tobalaba, "tobalaba".parse().unwrap());
 		assert_eq!(SpecType::Morden, "morden".parse().unwrap());
 		assert_eq!(SpecType::Ropsten, "ropsten".parse().unwrap());
 		assert_eq!(SpecType::Olympic, "olympic".parse().unwrap());
@@ -353,6 +358,7 @@ mod tests {
 		assert_eq!(format!("{}", SpecType::Classic), "classic");
 		assert_eq!(format!("{}", SpecType::Expanse), "expanse");
 		assert_eq!(format!("{}", SpecType::Kovan), "kovan");
+		assert_eq!(format!("{}", SpecType::Tobalaba), "tobalaba");
 		assert_eq!(format!("{}", SpecType::Dev), "dev");
 		assert_eq!(format!("{}", SpecType::Custom("foo/bar".into())), "foo/bar");
 	}

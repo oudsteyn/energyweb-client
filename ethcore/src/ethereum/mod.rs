@@ -67,6 +67,9 @@ pub fn new_ropsten(cache_dir: &Path) -> Spec { load(cache_dir, include_bytes!(".
 /// Create a new Morden chain spec.
 pub fn new_morden(cache_dir: &Path) -> Spec { load(cache_dir, include_bytes!("../../res/ethereum/morden.json")) }
 
+/// Create a new Tobalaba chain spec.
+pub fn new_tobalaba(cache_dir: &Path) -> Spec { load(cache_dir, include_bytes!("../../res/ethereum/tobalaba.json")) }
+
 // For tests
 
 /// Create a new Foundation Frontier-era chain spec as though it never changes to Homestead.
