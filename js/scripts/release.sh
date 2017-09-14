@@ -10,11 +10,16 @@ GIT_PARITY="https://${GITHUB_JS_PRECOMPILED}:@github.com/paritytech/parity.git"
 
 # setup the git user defaults for the current repo
 function setup_git_user {
+  echo "Setting up git user in build.."
   git config push.default simple
   git config merge.ours.driver true
   git config user.email "$GITHUB_EMAIL"
   git config user.name "GitLab Build Bot"
 }
+
+# CI Hack
+git config --global user.email "gitlab@parity.io"
+git config --global user.name "gitlab"
 
 # change into the build directory
 BASEDIR=`dirname $0`
