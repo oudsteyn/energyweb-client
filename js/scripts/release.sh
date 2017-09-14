@@ -17,9 +17,6 @@ function setup_git_user {
   git config user.name "GitLab Build Bot"
 }
 
-# CI Hack
-git config --global user.email "gitlab@parity.io"
-git config --global user.name "gitlab"
 
 # change into the build directory
 BASEDIR=`dirname $0`
@@ -39,6 +36,7 @@ git fetch origin 2>$GITLOG
 git checkout -b $BRANCH
 
 echo "*** Committing compiled files for $UTCDATE"
+setup_git_user
 mv build ../build.new
 git add .
 git commit -m "$UTCDATE [update]"
