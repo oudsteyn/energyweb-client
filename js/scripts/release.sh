@@ -10,13 +10,11 @@ GIT_PARITY="https://${GITHUB_JS_PRECOMPILED}:@github.com/paritytech/parity.git"
 
 # setup the git user defaults for the current repo
 function setup_git_user {
-  echo "Setting up git user in build.."
   git config push.default simple
   git config merge.ours.driver true
-  git config user.email "gitlab@parity.io"
+  git config user.email "$GITHUB_EMAIL"
   git config user.name "GitLab Build Bot"
 }
-
 
 # change into the build directory
 BASEDIR=`dirname $0`
@@ -36,7 +34,6 @@ git fetch origin 2>$GITLOG
 git checkout -b $BRANCH
 
 echo "*** Committing compiled files for $UTCDATE"
-setup_git_user
 mv build ../build.new
 git add .
 git commit -m "$UTCDATE [update]"
