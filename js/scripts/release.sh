@@ -13,7 +13,7 @@ function setup_git_user {
   echo "Setting up git user in build.."
   git config push.default simple
   git config merge.ours.driver true
-  git config user.email "$GITHUB_EMAIL"
+  git config user.email "gitlab@parity.io"
   git config user.name "GitLab Build Bot"
 }
 
