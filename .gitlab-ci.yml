@@ -477,6 +477,7 @@ windows:
     - set RUSTFLAGS=%RUSTFLAGS%
     - rustup default stable-x86_64-pc-windows-msvc
     - cargo clean
+    - cd js&&npm install&&cd ..
     - cargo build --features final --release #%CARGOFLAGS%
     - cargo build --release -p ethstore-cli #%CARGOFLAGS%
     - cargo build --release -p ethkey-cli #%CARGOFLAGS%
