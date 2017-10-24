@@ -17,7 +17,7 @@
 import React from 'react';
 import { FormattedMessage } from 'react-intl';
 
-import imagesEthcore from '@parity/shared/assets/images/parity-logo-white.svg';
+import imagesEthcore from '../../../assets/ewf-logo.svg';
 
 import styles from '../firstRun.css';
 
