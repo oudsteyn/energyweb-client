@@ -27,7 +27,7 @@ import Button from '@parity/ui/Button';
 import Portal from '@parity/ui/Portal';
 import { CheckIcon, DoneIcon, NextIcon, PrintIcon, ReplayIcon } from '@parity/ui/Icons';
 
-import ParityLogo from '@parity/shared/assets/images/parity-logo-black-no-text.svg';
+import ParityLogo from '../../assets/ewf-logo-no-text.svg';
 import { NewAccount, AccountDetails } from '@parity/dapp-accounts/src/CreateAccount';
 import print from '@parity/dapp-accounts/src/CreateAccount/print';
 import recoveryPage from '@parity/dapp-accounts/src/CreateAccount/recoveryPage.ejs';

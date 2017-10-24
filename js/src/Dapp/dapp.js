@@ -25,6 +25,8 @@ import viewsDapps from '@parity/shared/config/dappsViews.json';
 import DappsStore from '@parity/shared/mobx/dappsStore';
 import HistoryStore from '@parity/shared/mobx/historyStore';
 
+import ParityLogo from '../../assets/ewf-logo.svg';
+
 import styles from './dapp.css';
 
 const internalDapps = []
@@ -93,9 +95,9 @@ export default class Dapp extends Component {
       return (
         <div className={ styles.full }>
           <div className={ styles.text }>
-            <FormattedMessage
-              id='dapp.loading'
-              defaultMessage='Loading'
+            <img
+              src={ ParityLogo }
+              alt='Parity Ltd.'
             />
           </div>
         </div>
