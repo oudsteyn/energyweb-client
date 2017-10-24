@@ -22,7 +22,7 @@ use serde::{Serialize, Deserialize, Serializer, Deserializer};
 use serde::de::{Visitor, Error as SerdeError};
 use ethkey::{Public, Secret, Signature};
 use bigint::hash::H256;
-use util::Bytes;
+use bytes::Bytes;
 
 /// Serializable message hash.
 pub type SerializableMessageHash = SerializableH256;
@@ -204,8 +204,29 @@ impl<'a> Deserialize<'a> for SerializableH256 {
 	}
 }
 
+impl PartialEq<SerializableH256> for SerializableH256 {
+	fn eq(&self, other: &Self) -> bool {
+		self.0.eq(&other.0)
+	}
+}
+
+impl Eq for SerializableH256 {
+}
+
+impl PartialOrd for SerializableH256 {
+	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		self.0.partial_cmp(&other.0)
+	}
+}
+
+impl Ord for SerializableH256 {
+	fn cmp(&self, other: &Self) -> Ordering {
+		self.0.cmp(&other.0)
+	}
+}
+
 /// Serializable EC scalar/secret key.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SerializableSecret(pub Secret);
 
 impl<T> From<T> for SerializableSecret where Secret: From<T> {

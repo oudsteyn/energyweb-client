@@ -19,7 +19,8 @@ use std::collections::{HashMap, HashSet};
 
 use bigint::prelude::U256;
 use bigint::hash::H256;
-use util::{Address, Bytes};
+use util::Address;
+use bytes::Bytes;
 use {
 	CallType, Schedule, EnvInfo,
 	ReturnData, Ext, ContractCreateResult, MessageCallResult,
@@ -78,6 +79,12 @@ pub fn test_finalize(res: Result<GasLeft>) -> Result<U256> {
 impl FakeExt {
 	pub fn new() -> Self {
 		FakeExt::default()
+	}
+
+	pub fn new_byzantium() -> Self {
+		let mut ext = FakeExt::default();
+		ext.schedule = Schedule::new_byzantium();
+		ext
 	}
 }
 
@@ -163,7 +170,7 @@ impl Ext for FakeExt {
 		Ok(())
 	}
 
-	fn ret(self, _gas: &U256, _data: &ReturnData) -> Result<U256> {
+	fn ret(self, _gas: &U256, _data: &ReturnData, _apply_state: bool) -> Result<U256> {
 		unimplemented!();
 	}
 
@@ -182,6 +189,10 @@ impl Ext for FakeExt {
 
 	fn depth(&self) -> usize {
 		self.depth
+	}
+
+	fn is_static(&self) -> bool {
+		false
 	}
 
 	fn inc_sstore_clears(&mut self) {

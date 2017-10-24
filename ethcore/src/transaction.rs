@@ -22,7 +22,8 @@ use hash::keccak;
 use heapsize::HeapSizeOf;
 use bigint::prelude::U256;
 use bigint::hash::H256;
-use util::{Address, Bytes};
+use util::Address;
+use bytes::Bytes;
 use ethkey::{Signature, Secret, Public, recover, public_to_address, Error as EthkeyError};
 use error::*;
 use evm::Schedule;
@@ -467,6 +468,11 @@ impl SignedTransaction {
 	/// Checks is signature is empty.
 	pub fn is_unsigned(&self) -> bool {
 		self.transaction.is_unsigned()
+	}
+
+	/// Deconstructs this transaction back into `UnverifiedTransaction`
+	pub fn deconstruct(self) -> (UnverifiedTransaction, Address, Option<Public>) {
+		(self.transaction, self.sender, self.public)
 	}
 }
 

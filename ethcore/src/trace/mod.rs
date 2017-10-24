@@ -39,7 +39,9 @@ pub use self::types::filter::{Filter, AddressesFilter};
 
 use bigint::prelude::U256;
 use bigint::hash::H256;
-use util::{Bytes, Address, DBTransaction};
+use util::Address;
+use kvdb::DBTransaction;
+use bytes::Bytes;
 use self::trace::{Call, Create};
 use vm::ActionParams;
 use header::BlockNumber;

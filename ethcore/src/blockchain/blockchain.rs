@@ -25,7 +25,7 @@ use heapsize::HeapSizeOf;
 use bigint::prelude::U256;
 use bigint::hash::{H256, H2048};
 use parking_lot::{Mutex, RwLock};
-use util::*;
+use bytes::Bytes;
 use rlp::*;
 use header::*;
 use super::extras::*;
@@ -46,6 +46,7 @@ use encoded;
 use engines::epoch::{Transition as EpochTransition, PendingTransition as PendingEpochTransition};
 use rayon::prelude::*;
 use ansi_term::Colour;
+use kvdb::{DBTransaction, KeyValueDB};
 
 const LOG_BLOOMS_LEVELS: usize = 3;
 const LOG_BLOOMS_ELEMENTS_PER_INDEX: usize = 16;
@@ -1478,9 +1479,10 @@ mod tests {
 	use std::sync::Arc;
 	use rustc_hex::FromHex;
 	use hash::keccak;
-	use util::kvdb::KeyValueDB;
+	use kvdb::KeyValueDB;
+	use kvdb_memorydb;
 	use bigint::hash::*;
-	use receipt::Receipt;
+	use receipt::{Receipt, TransactionOutcome};
 	use blockchain::{BlockProvider, BlockChain, Config, ImportRoute};
 	use tests::helpers::*;
 	use blockchain::generator::{ChainGenerator, ChainIterator, BlockFinalizer};
@@ -1492,7 +1494,7 @@ mod tests {
 	use header::BlockNumber;
 
 	fn new_db() -> Arc<KeyValueDB> {
-		Arc::new(::util::kvdb::in_memory(::db::NUM_COLUMNS.unwrap_or(0)))
+		Arc::new(kvdb_memorydb::create(::db::NUM_COLUMNS.unwrap_or(0)))
 	}
 
 	fn new_chain(genesis: &[u8], db: Arc<KeyValueDB>) -> BlockChain {
@@ -2047,7 +2049,7 @@ mod tests {
 		let db = new_db();
 		let bc = new_chain(&genesis, db.clone());
 		insert_block(&db, &bc, &b1, vec![Receipt {
-			state_root: Some(H256::default()),
+			outcome: TransactionOutcome::StateRoot(H256::default()),
 			gas_used: 10_000.into(),
 			log_bloom: Default::default(),
 			logs: vec![
@@ -2056,7 +2058,7 @@ mod tests {
 			],
 		},
 		Receipt {
-			state_root: Some(H256::default()),
+			outcome: TransactionOutcome::StateRoot(H256::default()),
 			gas_used: 10_000.into(),
 			log_bloom: Default::default(),
 			logs: vec![
@@ -2065,7 +2067,7 @@ mod tests {
 		}]);
 		insert_block(&db, &bc, &b2, vec![
 			Receipt {
-				state_root: Some(H256::default()),
+				outcome: TransactionOutcome::StateRoot(H256::default()),
 				gas_used: 10_000.into(),
 				log_bloom: Default::default(),
 				logs: vec![
