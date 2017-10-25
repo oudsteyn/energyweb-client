@@ -14,6 +14,7 @@ function setup_git_user {
   git config merge.ours.driver true
   git config user.email "$GITHUB_EMAIL"
   git config user.name "GitLab Build Bot"
+  git config http.postBuffer 524288000
 }
 
 # change into the build directory
