@@ -478,7 +478,6 @@ windows:
     - rustup default stable-x86_64-pc-windows-msvc
     - cargo clean
     - git config --global url."https://".insteadOf git://
-    - npm install 
     - npm install extract-zip --save
     - cd js&&npm install&&cd ..
     - cargo build --features final --release #%CARGOFLAGS%
@@ -644,22 +643,22 @@ test-rust-nightly:
     - rust
     - rust-nightly
   allow_failure: true
-#js-release:
-#  stage: js-build
-#  only:
-#    - master
-#    - beta
-#    - stable
-#    - tags
-#    - triggers
-#  image: parity/rust:gitlab-ci
-#  before_script:
-#    - export JS_FILES_MODIFIED=$(git --no-pager diff --name-only $CI_BUILD_REF^ $CI_BUILD_REF | grep ^js/ | wc -l)
-#    - echo $JS_FILES_MODIFIED
-#    - if [ $JS_FILES_MODIFIED -eq 0  ]; then echo "Skipping JS deps install since no JS files modified."; else ./js/scripts/install-deps.sh;fi
-#  script:
-#    - rustup default stable
-#    - echo $JS_FILES_MODIFIED
-#    - if [ $JS_FILES_MODIFIED -eq 0 ]; then echo "Skipping JS rebuild since no JS files modified."; else ./js/scripts/build.sh && ./js/scripts/release.sh; fi
-#  tags:
-#    - javascript
+js-release:
+  stage: js-build
+  only:
+    - master
+    - beta
+    - stable
+    - tags
+    - triggers
+  image: parity/rust:gitlab-ci
+  before_script:
+    - export JS_FILES_MODIFIED=$(git --no-pager diff --name-only $CI_BUILD_REF^ $CI_BUILD_REF | grep ^js/ | wc -l)
+    - echo $JS_FILES_MODIFIED
+    - if [ $JS_FILES_MODIFIED -eq 0  ]; then echo "Skipping JS deps install since no JS files modified."; else ./js/scripts/install-deps.sh;fi
+  script:
+    - rustup default stable
+    - echo $JS_FILES_MODIFIED
+    - if [ $JS_FILES_MODIFIED -eq 0 ]; then echo "Skipping JS rebuild since no JS files modified."; else ./js/scripts/build.sh && ./js/scripts/release.sh; fi
+  tags:
+   - javascript
