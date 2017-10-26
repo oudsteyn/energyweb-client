@@ -5,6 +5,7 @@ set -e
 UTCDATE=`date -u "+%Y%m%d-%H%M%S"`
 PACKAGES=()
 BRANCH=$CI_BUILD_REF_NAME
+PRECOMPILED_BRANCH=ewf
 GIT_JS_PRECOMPILED="https://${GITHUB_JS_PRECOMPILED}:@github.com/paritytech/js-precompiled.git"
 GIT_PARITY="https://${GITHUB_JS_PRECOMPILED}:@github.com/paritytech/parity.git"
 
@@ -29,16 +30,16 @@ rm -rf ./.git
 git init
 setup_git_user
 
-echo "*** Checking out $BRANCH branch"
+echo "*** Checking out $PRECOMPILED_BRANCH branch"
 git remote add origin $GIT_JS_PRECOMPILED
 git fetch origin 2>$GITLOG
-git checkout -b $BRANCH
+git checkout -b $PRECOMPILED_BRANCH
 
 echo "*** Committing compiled files for $UTCDATE"
 mv build ../build.new
 git add .
 git commit -m "$UTCDATE [update]"
-git merge origin/$BRANCH -X ours --commit -m "$UTCDATE [merge]"
+git merge origin/$PRECOMPILED_BRANCH -X ours --commit -m "$UTCDATE [merge]"
 git rm -r build
 rm -rf build
 git commit -m "$UTCDATE [cleanup]"
@@ -65,27 +66,27 @@ if [ "$BRANCH" == "master" ]; then
   npm --no-git-tag-version version
   npm version patch
 
-  echo "*** Building packages for npmjs"
-  echo "$NPM_TOKEN" >> ~/.npmrc
-
-  for PACKAGE in ${PACKAGES[@]}
-  do
-    echo "*** Building $PACKAGE"
-    LIBRARY=$PACKAGE npm run ci:build:npm
-    DIRECTORY=.npmjs/$PACKAGE
-
-    echo "*** Publishing $PACKAGE from $DIRECTORY"
-    cd $DIRECTORY
-    npm publish --access public || true
-    cd ../..
-  done
+  # echo "*** Building packages for npmjs"
+  # echo "$NPM_TOKEN" >> ~/.npmrc
+  #
+  # for PACKAGE in ${PACKAGES[@]}
+  # do
+  #   echo "*** Building $PACKAGE"
+  #   LIBRARY=$PACKAGE npm run ci:build:npm
+  #   DIRECTORY=.npmjs/$PACKAGE
+  #
+  #   echo "*** Publishing $PACKAGE from $DIRECTORY"
+  #   cd $DIRECTORY
+  #   npm publish --access public || true
+  #   cd ../..
+  # done
 
   cd ..
 fi
 
 echo "*** Updating cargo parity-ui-precompiled#$PRECOMPILED_HASH"
 git submodule update
-sed -i "/^parity-ui-precompiled/ { s/branch = \".*\"/branch = \"$BRANCH\"/g; }" dapps/ui/Cargo.toml
+sed -i "/^parity-ui-precompiled/ { s/branch = \".*\"/branch = \"$PRECOMPILED_BRANCH\"/g; }" dapps/ui/Cargo.toml
 cargo update -p parity-ui-precompiled
 # --precise "$PRECOMPILED_HASH"
 
