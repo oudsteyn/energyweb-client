@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 # variables
 UTCDATE=`date -u "+%Y%m%d-%H%M%S"`
