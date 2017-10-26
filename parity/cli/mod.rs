@@ -299,9 +299,9 @@ usage! {
 			testing - Testing releases (do not use).
 			current - Whatever track this executable was released on",
 
-			ARG arg_chain: (String) = "foundation", or |c: &Config| otry!(c.parity).chain.clone(),
+			ARG arg_chain: (String) = "tobalaba", or |c: &Config| otry!(c.parity).chain.clone(),
 			"--chain=[CHAIN]",
-			"Specify the blockchain type. CHAIN may be either a JSON chain specification file or olympic, frontier, homestead, mainnet, morden, ropsten, classic, expanse, musicoin, testnet, kovan or dev.",
+			"Specify the blockchain type. CHAIN may be either a JSON chain specification file or olympic, frontier, homestead, mainnet, morden, ropsten, classic, expanse, testnet, kovan or dev.",
 
 			ARG arg_keys_path: (String) = "$BASE/keys", or |c: &Config| otry!(c.parity).keys_path.clone(),
 			"--keys-path=[PATH]",
@@ -480,7 +480,7 @@ usage! {
 
 			ARG arg_jsonrpc_server_threads: (Option<usize>) = None, or |c: &Config| otry!(c.rpc).server_threads,
 			"--jsonrpc-server-threads=[NUM]",
-			"Enables multiple threads handling incoming connections for HTTP JSON-RPC server.",
+			"Enables experimental faster implementation of JSON-RPC server. Requires Dapps server to be disabled using --no-dapps.",
 
 		["API and console options – WebSockets"]
 			FLAG flag_no_ws: (bool) = false, or |c: &Config| otry!(c.websockets).disable.clone(),
@@ -590,10 +590,6 @@ usage! {
 			ARG arg_secretstore_secret: (Option<String>) = None, or |c: &Config| otry!(c.secretstore).self_secret.clone(),
 			"--secretstore-secret=[SECRET]",
 			"Hex-encoded secret key of this node.",
-
-			ARG arg_secretstore_admin_public: (Option<String>) = None, or |c: &Config| otry!(c.secretstore).admin_public.clone(),
-			"--secretstore-admin-public=[PUBLIC]",
-			"Hex-encoded public key of secret store administrator.",
 
 		["Sealing/Mining options"]
 			FLAG flag_force_sealing: (bool) = false, or |c: &Config| otry!(c.mining).force_sealing.clone(),
@@ -1093,7 +1089,6 @@ struct SecretStore {
 	disable_http: Option<bool>,
 	disable_acl_check: Option<bool>,
 	self_secret: Option<String>,
-	admin_public: Option<String>,
 	nodes: Option<Vec<String>>,
 	interface: Option<String>,
 	port: Option<u16>,
@@ -1201,17 +1196,6 @@ mod tests {
 		Snapshots, VM, Misc, Whisper, SecretStore,
 	};
 	use toml;
-	use clap::{ErrorKind as ClapErrorKind};
-
-
-	#[test]
-	fn should_reject_invalid_values() {
-		let args = Args::parse(&["parity", "--cache=20"]);
-		assert!(args.is_ok());
-
-		let args = Args::parse(&["parity", "--cache=asd"]);
-		assert!(args.is_err());
-	}
 
 	#[test]
 	fn should_parse_args_and_flags() {
@@ -1226,17 +1210,6 @@ mod tests {
 
 		let args = Args::parse(&["parity", "export", "state", "--min-balance","123"]).unwrap();
 		assert_eq!(args.arg_export_state_min_balance, Some("123".to_string()));
-	}
-
-	#[test]
-	fn should_exit_gracefully_on_unknown_argument() {
-		let result = Args::parse(&["parity", "--please-exit-gracefully"]);
-		assert!(
-			match result {
-				Err(ArgsError::Clap(ref clap_error)) if clap_error.kind == ClapErrorKind::UnknownArgument => true,
-				_ => false
-			}
-		);
 	}
 
 	#[test]
@@ -1472,7 +1445,6 @@ mod tests {
 			flag_no_secretstore_http: false,
 			flag_no_secretstore_acl_check: false,
 			arg_secretstore_secret: None,
-			arg_secretstore_admin_public: None,
 			arg_secretstore_nodes: "".into(),
 			arg_secretstore_interface: "local".into(),
 			arg_secretstore_port: 8083u16,
@@ -1712,7 +1684,6 @@ mod tests {
 				disable_http: None,
 				disable_acl_check: None,
 				self_secret: None,
-				admin_public: None,
 				nodes: None,
 				interface: None,
 				port: Some(8083),
