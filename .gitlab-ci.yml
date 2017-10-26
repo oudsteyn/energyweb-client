@@ -478,8 +478,7 @@ windows:
     - rustup default stable-x86_64-pc-windows-msvc
     - cargo clean
     - git config --global url."https://".insteadOf git://
-    - npm install extract-zip --save
-    - cd js&&npm install&&cd ..
+    - cd js&&npm install extract-zip --save&&npm install&&cd ..
     - cargo build --features final --release #%CARGOFLAGS%
     - cargo build --release -p ethstore-cli #%CARGOFLAGS%
     - cargo build --release -p ethkey-cli #%CARGOFLAGS%
