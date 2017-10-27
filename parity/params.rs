@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::{str, fs, fmt, path};
+use std::{str, fs, fmt};
 use std::time::Duration;
 use bigint::prelude::U256;
 use util::{Address, version_data};
-use util::journaldb::Algorithm;
-use ethcore::spec::Spec;
+use journaldb::Algorithm;
+use ethcore::spec::{Spec, SpecParams};
 use ethcore::ethereum;
 use ethcore::client::Mode;
 use ethcore::miner::{GasPricer, GasPriceCalibratorOptions};
@@ -31,11 +31,12 @@ pub enum SpecType {
 	Foundation,
 	Morden,
 	Ropsten,
+        Tobalaba,
 	Kovan,
-	Tobalaba,
 	Olympic,
 	Classic,
 	Expanse,
+	Musicoin,
 	Dev,
 	Custom(String),
 }
@@ -56,9 +57,10 @@ impl str::FromStr for SpecType {
 			"morden" | "classic-testnet" => SpecType::Morden,
 			"ropsten" => SpecType::Ropsten,
 			"kovan" | "testnet" => SpecType::Kovan,
-			"tobalaba" => SpecType::Tobalaba,
+                        "tobalaba" => SpecType::Tobalaba,
 			"olympic" => SpecType::Olympic,
 			"expanse" => SpecType::Expanse,
+			"musicoin" => SpecType::Musicoin,
 			"dev" => SpecType::Dev,
 			other => SpecType::Custom(other.into()),
 		};
@@ -75,8 +77,9 @@ impl fmt::Display for SpecType {
 			SpecType::Olympic => "olympic",
 			SpecType::Classic => "classic",
 			SpecType::Expanse => "expanse",
+			SpecType::Musicoin => "musicoin",
 			SpecType::Kovan => "kovan",
-			SpecType::Tobalaba => "tobalaba",
+                        SpecType::Tobalaba => "tobalaba",
 			SpecType::Dev => "dev",
 			SpecType::Custom(ref custom) => custom,
 		})
@@ -84,21 +87,22 @@ impl fmt::Display for SpecType {
 }
 
 impl SpecType {
-	pub fn spec<T: AsRef<path::Path>>(&self, cache_dir: T) -> Result<Spec, String> {
-		let cache_dir = cache_dir.as_ref();
+	pub fn spec<'a, T: Into<SpecParams<'a>>>(&self, params: T) -> Result<Spec, String> {
+		let params = params.into();
 		match *self {
-			SpecType::Foundation => Ok(ethereum::new_foundation(cache_dir)),
-			SpecType::Morden => Ok(ethereum::new_morden(cache_dir)),
-			SpecType::Ropsten => Ok(ethereum::new_ropsten(cache_dir)),
-			SpecType::Olympic => Ok(ethereum::new_olympic(cache_dir)),
-			SpecType::Classic => Ok(ethereum::new_classic(cache_dir)),
-			SpecType::Expanse => Ok(ethereum::new_expanse(cache_dir)),
-			SpecType::Kovan => Ok(ethereum::new_kovan(cache_dir)),
-			SpecType::Tobalaba => Ok(ethereum::new_tobalaba(cache_dir)),
+			SpecType::Foundation => Ok(ethereum::new_foundation(params)),
+			SpecType::Morden => Ok(ethereum::new_morden(params)),
+			SpecType::Ropsten => Ok(ethereum::new_ropsten(params)),
+			SpecType::Olympic => Ok(ethereum::new_olympic(params)),
+			SpecType::Classic => Ok(ethereum::new_classic(params)),
+			SpecType::Expanse => Ok(ethereum::new_expanse(params)),
+			SpecType::Musicoin => Ok(ethereum::new_musicoin(params)),
+			SpecType::Kovan => Ok(ethereum::new_kovan(params)),
+                        SpecType::Tobalaba => Ok(ethereum::new_tobalaba(params)),
 			SpecType::Dev => Ok(Spec::new_instant()),
 			SpecType::Custom(ref filename) => {
 				let file = fs::File::open(filename).map_err(|e| format!("Could not load specification file at {}: {}", filename, e))?;
-				Spec::load(cache_dir, file)
+				Spec::load(params, file)
 			}
 		}
 	}
@@ -107,6 +111,7 @@ impl SpecType {
 		match *self {
 			SpecType::Classic => Some("classic".to_owned()),
 			SpecType::Expanse => Some("expanse".to_owned()),
+			SpecType::Musicoin => Some("musicoin".to_owned()),
 			_ => None,
 		}
 	}
@@ -325,7 +330,7 @@ pub fn mode_switch_to_bool(switch: Option<Mode>, user_defaults: &UserDefaults) -
 
 #[cfg(test)]
 mod tests {
-	use util::journaldb::Algorithm;
+	use journaldb::Algorithm;
 	use user_defaults::UserDefaults;
 	use super::{SpecType, Pruning, ResealPolicy, Switch, tracing_switch_to_bool};
 
@@ -337,7 +342,7 @@ mod tests {
 		assert_eq!(SpecType::Foundation, "foundation".parse().unwrap());
 		assert_eq!(SpecType::Kovan, "testnet".parse().unwrap());
 		assert_eq!(SpecType::Kovan, "kovan".parse().unwrap());
-		assert_eq!(SpecType::Tobalaba, "tobalaba".parse().unwrap());
+                assert_eq!(SpecType::Tobalaba, "tobalaba".parse().unwrap());
 		assert_eq!(SpecType::Morden, "morden".parse().unwrap());
 		assert_eq!(SpecType::Ropsten, "ropsten".parse().unwrap());
 		assert_eq!(SpecType::Olympic, "olympic".parse().unwrap());
@@ -358,8 +363,9 @@ mod tests {
 		assert_eq!(format!("{}", SpecType::Olympic), "olympic");
 		assert_eq!(format!("{}", SpecType::Classic), "classic");
 		assert_eq!(format!("{}", SpecType::Expanse), "expanse");
+		assert_eq!(format!("{}", SpecType::Musicoin), "musicoin");
 		assert_eq!(format!("{}", SpecType::Kovan), "kovan");
-		assert_eq!(format!("{}", SpecType::Tobalaba), "tobalaba");
+                assert_eq!(format!("{}", SpecType::Tobalaba), "tobalaba");
 		assert_eq!(format!("{}", SpecType::Dev), "dev");
 		assert_eq!(format!("{}", SpecType::Custom("foo/bar".into())), "foo/bar");
 	}
