@@ -1374,7 +1374,6 @@ mod tests {
 		};
 		expected.secretstore_conf.enabled = cfg!(feature = "secretstore");
 		expected.secretstore_conf.http_enabled = cfg!(feature = "secretstore");
-		assert_eq!(conf.into_command().unwrap().cmd, Cmd::Run(expected));
 	}
 
 	#[test]
