@@ -6,7 +6,8 @@
                 "stepDuration": "3",
                 "validators": {
                     "contract": "0x1000000000000000000000000000000000000005"
-                }
+                },
+	     "gasLimitBoundDivisor": "0x400"
             }
         }
     },
