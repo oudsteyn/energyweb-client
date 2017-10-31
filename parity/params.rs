@@ -365,7 +365,7 @@ mod tests {
 		assert_eq!(format!("{}", SpecType::Expanse), "expanse");
 		assert_eq!(format!("{}", SpecType::Musicoin), "musicoin");
 		assert_eq!(format!("{}", SpecType::Kovan), "kovan");
-                assert_eq!(format!("{}", SpecType::Tobalaba), "tobalaba");
+                //assert_eq!(format!("{}", SpecType::Tobalaba), "tobalaba");
 		assert_eq!(format!("{}", SpecType::Dev), "dev");
 		assert_eq!(format!("{}", SpecType::Custom("foo/bar".into())), "foo/bar");
 	}
