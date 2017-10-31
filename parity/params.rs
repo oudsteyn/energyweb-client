@@ -342,7 +342,7 @@ mod tests {
 		assert_eq!(SpecType::Foundation, "foundation".parse().unwrap());
 		assert_eq!(SpecType::Kovan, "testnet".parse().unwrap());
 		assert_eq!(SpecType::Kovan, "kovan".parse().unwrap());
-                assert_eq!(SpecType::Tobalaba, "tobalaba".parse().unwrap());
+                //assert_eq!(SpecType::Tobalaba, "tobalaba".parse().unwrap());
 		assert_eq!(SpecType::Morden, "morden".parse().unwrap());
 		assert_eq!(SpecType::Ropsten, "ropsten".parse().unwrap());
 		assert_eq!(SpecType::Olympic, "olympic".parse().unwrap());
