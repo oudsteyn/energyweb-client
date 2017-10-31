@@ -596,6 +596,7 @@ test-rust-stable:
   tags:
     - rust
     - rust-stable
+  allow_failure: true
 js-test:
   stage: test
   image: parity/rust:gitlab-ci
