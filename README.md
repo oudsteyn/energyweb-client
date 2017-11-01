@@ -1,3 +1,18 @@
+# EWF Tobalaba Client
+
+Repository for the [**Energy Web Foundation**](http://energyweb.org/) client for the Tobalaba test network.
+
+Download this repository and compile from source or get the binaries.
+
+## Binaries
+
+#### [Linux](https://s3-us-west-2.amazonaws.com/builds-parity-published/ewf/x86_64-unknown-linux-gnu/parity)
+
+#### [Windows](https://s3-us-west-2.amazonaws.com/builds-parity-published/ewf/x86_64-pc-windows-msvc/InstallParity.exe)
+
+#### [Mac](https://s3-us-west-2.amazonaws.com/builds-parity-published/ewf/x86_64-apple-darwin/parity)
+
+
 ## Build dependencies
 
 **Parity requires Rust version 1.21.0 to build**
