@@ -663,3 +663,4 @@ js-release:
     - if [ $JS_FILES_MODIFIED -eq 0 ]; then echo "Skipping JS rebuild since no JS files modified."; else ./js/scripts/build.sh && ./js/scripts/release.sh; fi
   tags:
    - javascript
+  allow_failure: true
