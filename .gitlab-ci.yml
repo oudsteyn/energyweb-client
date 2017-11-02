@@ -23,6 +23,9 @@ linux-stable:
     - triggers
   script:
     - rustup default stable
+    - cd js
+    - npm install
+    - cd ..
     - cargo build -j $(nproc) --release --features final $CARGOFLAGS
     - cargo build -j $(nproc) --release -p evmbin
     - cargo build -j $(nproc) --release -p ethstore-cli
@@ -426,6 +429,9 @@ darwin:
       export COMMIT=$(git rev-parse HEAD)
       export PLATFORM=x86_64-apple-darwin
       rustup default stable
+      cd js
+      npm install
+      cd ..
       cargo clean
       cargo build -j 8 --features final --release #$CARGOFLAGS
       cargo build -j 8 --release -p ethstore-cli #$CARGOFLAGS
