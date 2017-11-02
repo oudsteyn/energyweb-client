@@ -9,6 +9,7 @@ BRANCH=$CI_BUILD_REF_NAME
 PRECOMPILED_BRANCH=ewf
 GIT_JS_PRECOMPILED="https://${GITHUB_JS_PRECOMPILED}:@github.com/paritytech/js-precompiled.git"
 GIT_PARITY="https://${GITHUB_JS_PRECOMPILED}:@github.com/paritytech/parity.git"
+GITHUB_EMAIL="ci@parity.io"
 
 # setup the git user defaults for the current repo
 function setup_git_user {
