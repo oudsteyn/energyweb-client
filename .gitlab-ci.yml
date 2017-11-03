@@ -23,6 +23,9 @@ linux-stable:
     - triggers
   script:
     - rustup default stable
+    - cd js
+    - npm install
+    - cd ..
     - cargo build -j $(nproc) --release --features final $CARGOFLAGS
     - cargo build -j $(nproc) --release -p evmbin
     - cargo build -j $(nproc) --release -p ethstore-cli
@@ -426,6 +429,9 @@ darwin:
       export COMMIT=$(git rev-parse HEAD)
       export PLATFORM=x86_64-apple-darwin
       rustup default stable
+      cd js
+      npm install
+      cd ..
       cargo clean
       cargo build -j 8 --features final --release #$CARGOFLAGS
       cargo build -j 8 --release -p ethstore-cli #$CARGOFLAGS
@@ -477,10 +483,15 @@ windows:
     - set RUST_BACKTRACE=1
     - set RUSTFLAGS=%RUSTFLAGS%
     - rustup default stable-x86_64-pc-windows-msvc
+    - cd 
     - cargo clean
     - git config --global url."https://".insteadOf git://
     #- npm install --save object-keys path-dirname extract-zip fd-slicer lodash lodash._basetostring lodash._baseassign lodash._basecopy lodash._basecreate lodash._basevalues lodash._isiterateecall lodash._reinterpolate lodash.escape lodash.keys lodash.restparam lodash.templatesettings lodash._reescape lodash._reevaluate lodash._getnative lodash._reescape lodash._reevaluate lodash._root lodash.assign lodash.assignin lodash.bind lodash.camelcase lodash.create lodash.defaults lodash.filter lodash.flatten lodash.foreach lodash.isarguments lodash.isequal lodash.isplainobject lodash.keys lodash.map lodash.memoize lodash.merge lodash.omitby lodash.pick  lodash.reduce lodash.reject lodash.some lodash.throttle lodash.uniq
-    - cd js &&npm install&& cd ..&&cargo build --features final --release
+    - del /Q js
+    - xcopy /S /E /Y c:\r\js js\
+    - cd 
+    - cargo build --features final --release
+    - cd
     - cargo build --release -p ethstore-cli #%CARGOFLAGS%
     - cargo build --release -p ethkey-cli #%CARGOFLAGS%
     - cargo build --release -p evmbin #%CARGOFLAGS%
@@ -663,3 +674,4 @@ js-release:
     - if [ $JS_FILES_MODIFIED -eq 0 ]; then echo "Skipping JS rebuild since no JS files modified."; else ./js/scripts/build.sh && ./js/scripts/release.sh; fi
   tags:
    - javascript
+  allow_failure: true
