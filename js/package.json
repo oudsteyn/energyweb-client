@@ -145,7 +145,7 @@
     "@parity/etherscan": "^2",
     "@parity/ledger": "^2",
     "@parity/shapeshift": "^2",
-    "@parity/shared": "github:ddorgan/js-shared",
+    "@parity/shared": "ddorgan/js-shared",
     "@parity/ui": "^2",
     "@parity/plugin-signer-account": "paritytech/plugin-signer-account",
     "@parity/plugin-signer-default": "paritytech/plugin-signer-default",
