@@ -152,7 +152,7 @@
     "@parity/plugin-signer-hardware": "paritytech/plugin-signer-hardware#bb58c9e41e3de1d56c57f0ea075adf0a180cb143",
     "@parity/plugin-signer-qr": "paritytech/plugin-signer-qr#7a93e55cf09101fe9625f37f6335a067ba51c1fb",
     "@parity/dapp-account": "paritytech/dapp-account",
-    "@parity/dapp-accounts": "paritytech/dapp-accounts",
+    "@parity/dapp-accounts": "paritytech/dapp-accounts#8971d43e3223b92c402a5cb746af346cb29fc0ea",
     "@parity/dapp-address": "paritytech/dapp-address",
     "@parity/dapp-addresses": "paritytech/dapp-addresses",
     "@parity/dapp-chaindeploy": "paritytech/dapp-chaindeploy",
