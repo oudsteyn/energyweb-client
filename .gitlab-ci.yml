@@ -26,7 +26,7 @@ linux-stable:
     - cd js
     - npm install
     - cd ..
-    - cargo build -j $(nproc) --release --no-default-features --features-ui $CARGOFLAGS
+    - cargo build -j $(nproc) --release --no-default-features --features ui $CARGOFLAGS
     - cargo build -j $(nproc) --release -p evmbin
     - cargo build -j $(nproc) --release -p ethstore-cli
     - cargo build -j $(nproc) --release -p ethkey-cli
@@ -433,7 +433,7 @@ darwin:
       npm install
       cd ..
       cargo clean
-      cargo build -j 8 --release --no-default-features --features-ui  #$CARGOFLAGS
+      cargo build -j 8 --release --no-default-features --features ui  #$CARGOFLAGS
       cargo build -j 8 --release -p ethstore-cli #$CARGOFLAGS
       cargo build -j 8 --release -p ethkey-cli #$CARGOFLAGS
       cargo build -j 8 --release -p evmbin #$CARGOFLAGS
@@ -490,7 +490,7 @@ windows:
     #- del /Q js
     #- xcopy /S /E /Y c:\r\js js\
     - cd 
-    - cargo build --release --no-default-features --features-ui
+    - cargo build --release --no-default-features --features ui
     - cd
     - cargo build --release -p ethstore-cli #%CARGOFLAGS%
     - cargo build --release -p ethkey-cli #%CARGOFLAGS%
