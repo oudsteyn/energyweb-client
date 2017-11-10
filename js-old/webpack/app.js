@@ -48,7 +48,7 @@ const entry = isEmbed
 
 module.exports = {
   cache: !isProd,
-  devtool: isProd ? '#hidden-source-map' : '#source-map',
+  devtool: isProd ? null : '#source-map',
 
   context: path.join(__dirname, '../src'),
   entry: entry,
@@ -67,7 +67,7 @@ module.exports = {
       },
       {
         test: /\.js$/,
-        include: /node_modules\/(material-chip-input|ethereumjs-tx|@parity\/wordlist)/,
+        include: /(material-chip-input|ethereumjs-tx|wordlist)/,
         use: 'babel-loader'
       },
       {
