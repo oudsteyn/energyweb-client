@@ -28,7 +28,7 @@ const DEST = process.env.BUILD_DEST || '.build';
 module.exports = {
   context: path.join(__dirname, '../src'),
   devtool: isProd
-    ? '#source-map'
+    ? false
     : '#eval',
   entry: {
     inject: ['./inject.js'],

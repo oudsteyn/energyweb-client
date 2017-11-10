@@ -52,7 +52,7 @@ const entry = isEmbed
 module.exports = {
   cache: !isProd,
   devtool: isProd
-    ? null
+    ? false
     : '#eval',
   context: path.join(__dirname, '../src'),
   entry,
