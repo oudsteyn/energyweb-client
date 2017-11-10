@@ -16,7 +16,7 @@
 
 module.exports = {
   test: /\.js$/,
-  include: /node_modules\/@parity\//,
+  include: /@parity/,
   use: [ {
     loader: 'happypack/loader',
     options: {
