@@ -90,7 +90,7 @@ linux-snap:
     paths:
     - scripts/parity_*_amd64.snap
     name: "stable-x86_64-unknown-snap-gnu_parity"
-  allow_failure: true  
+  allow_failure: true
 linux-stable-debian:
   stage: build
   image: parity/rust-debian:gitlab-ci
@@ -226,7 +226,7 @@ linux-i686:
     - strip target/$PLATFORM/release/parity
     - strip target/$PLATFORM/release/parity-evm
     - strip target/$PLATFORM/release/ethstore
-    - strip target/$PLATFORM/release/ethkey   
+    - strip target/$PLATFORM/release/ethkey
     - strip target/$PLATFORM/release/parity
     - md5sum target/$PLATFORM/release/parity > parity.md5
     - export SHA3=$(target/$PLATFORM/release/parity tools hash target/$PLATFORM/release/parity)
@@ -477,7 +477,7 @@ windows:
     - set RUST_BACKTRACE=1
     - set RUSTFLAGS=%RUSTFLAGS%
     - rustup default stable-x86_64-pc-windows-msvc
-    #- cd 
+    #- cd
     - cargo clean
     - dir
     - git config --global url."https://".insteadOf git://
@@ -665,11 +665,11 @@ js-release:
   before_script:
     - export JS_FILES_MODIFIED=$(git --no-pager diff --name-only $CI_BUILD_REF^ $CI_BUILD_REF | grep ^js/ | wc -l)
     - echo $JS_FILES_MODIFIED
-    - if [ $JS_FILES_MODIFIED -eq 0  ]; then echo "Skipping JS deps install since no JS files modified."; else ./js/scripts/install-deps.sh;fi
+    # - if [ $JS_FILES_MODIFIED -eq 0  ]; then echo "Skipping JS deps install since no JS files modified."; else ./js/scripts/install-deps.sh;fi
   script:
-    - rustup default stable
+    # - rustup default stable
     - echo $JS_FILES_MODIFIED
-    - if [ $JS_FILES_MODIFIED -eq 0 ]; then echo "Skipping JS rebuild since no JS files modified."; else ./js/scripts/build.sh && ./js/scripts/release.sh; fi
+    # - if [ $JS_FILES_MODIFIED -eq 0 ]; then echo "Skipping JS rebuild since no JS files modified."; else ./js/scripts/build.sh && ./js/scripts/release.sh; fi
   tags:
    - javascript
   allow_failure: true

@@ -28,7 +28,7 @@
     "build:json": "babel-node ./scripts/build-rpc-json.js",
     "build:embed": "EMBED=1 node webpack/embed",
     "build:i18n": "npm run clean && npm run build && babel-node ./scripts/build-i18n.js",
-    "ci:build": "npm run ci:build:lib && npm run ci:build:app && npm run ci:build:embed",
+    "ci:build": "npm run ci:build:lib && npm run ci:build:app",
     "ci:build:app": "NODE_ENV=production webpack --progress --config webpack/app",
     "ci:build:lib": "NODE_ENV=production webpack --progress --config webpack/libraries",
     "ci:build:npm": "NODE_ENV=production webpack --progress --config webpack/npm",
