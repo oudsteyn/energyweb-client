@@ -34,7 +34,7 @@
     "ci:build:npm": "NODE_ENV=production webpack --progress --config webpack/npm",
     "ci:build:jsonrpc": "babel-node ./scripts/build-rpc-json.js --output .npmjs/jsonrpc",
     "ci:build:embed": "NODE_ENV=production EMBED=1 node webpack/embed",
-    "clean": "rm -rf ./.build ./.coverage ./.happypack ./build ./node_modules/.cache",
+    "clean": "rimraf ./.build ./.coverage ./.happypack ./build ./node_modules/.cache",
     "coveralls": "npm run testCoverage && coveralls < coverage/lcov.info",
     "lint": "npm run lint:css && npm run lint:js",
     "lint:cached": "npm run lint:css && npm run lint:js:cached",
@@ -50,7 +50,7 @@
     "test": "NODE_ENV=test mocha --compilers ejs:ejsify 'src/**/*.spec.js'",
     "test:coverage": "NODE_ENV=test istanbul cover _mocha -- --compilers ejs:ejsify 'src/**/*.spec.js'",
     "test:e2e": "NODE_ENV=test mocha 'src/**/*.e2e.js'",
-    "test:npm": "(cd .npmjs && npm i) && node test/npmParity && node test/npmJsonRpc && (rm -rf .npmjs/node_modules)",
+    "test:npm": "(cd .npmjs && npm i) && node test/npmParity && node test/npmJsonRpc && (rimraf .npmjs/node_modules)",
     "prepush": "npm run lint:cached"
   },
   "devDependencies": {
@@ -120,6 +120,7 @@
     "react-addons-test-utils": "15.4.2",
     "react-hot-loader": "3.0.0-beta.6",
     "react-intl-aggregate-webpack-plugin": "0.0.1",
+    "rimraf": "2.6.2",
     "sinon": "1.17.7",
     "sinon-as-promised": "4.0.2",
     "sinon-chai": "2.8.0",
