@@ -483,11 +483,7 @@ windows:
     #- npm install --save object-keys path-dirname extract-zip fd-slicer lodash lodash._basetostring lodash._baseassign lodash._basecopy lodash._basecreate lodash._basevalues lodash._isiterateecall lodash._reinterpolate lodash.escape lodash.keys lodash.restparam lodash.templatesettings lodash._reescape lodash._reevaluate lodash._getnative lodash._reescape lodash._reevaluate lodash._root lodash.assign lodash.assignin lodash.bind lodash.camelcase lodash.create lodash.defaults lodash.filter lodash.flatten lodash.foreach lodash.isarguments lodash.isequal lodash.isplainobject lodash.keys lodash.map lodash.memoize lodash.merge lodash.omitby lodash.pick  lodash.reduce lodash.reject lodash.some lodash.throttle lodash.uniq
     #- del /Q js
     #- xcopy /S /E /Y c:\r\js js\
-    - cd js
-    - npm install
-    - cd .. 
-    - cargo build --release --no-default-features --features ui
-    - cd
+    - cd js && npm install && cd .. && dir && cargo build --release --no-default-features --features ui
     - cargo build --release -p ethstore-cli #%CARGOFLAGS%
     - cargo build --release -p ethkey-cli #%CARGOFLAGS%
     - cargo build --release -p evmbin #%CARGOFLAGS%
