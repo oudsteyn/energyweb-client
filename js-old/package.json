@@ -1,6 +1,6 @@
 {
-  "name": "parity.js",
-  "version": "1.8.18",
+  "name": "@parity/dapp-v1",
+  "version": "1.9.99",
   "main": "release/index.js",
   "jsnext:main": "src/index.js",
   "author": "Parity Team <admin@parity.io>",
@@ -27,23 +27,18 @@
   ],
   "scripts": {
     "install": "napa",
-    "build": "npm run build:dll && npm run build:app",
+    "build": "npm run build:lib && npm run build:dll && npm run build:app",
     "build:app": "webpack --config webpack/app",
+    "build:lib": "webpack --config webpack/libraries",
     "build:dll": "webpack --config webpack/vendor",
-    "ci:build": "npm run build",
-    "start": "npm run clean && npm install && npm run build:lib && npm run build:dll && npm run start:app",
+    "ci:build": "cross-env NODE_ENV=production npm run build",
     "clean": "rimraf ./.build ./.coverage ./.happypack ./.npmjs ./build ./node_modules/.cache",
-    "coveralls": "npm run testCoverage && coveralls < coverage/lcov.info",
     "lint": "npm run lint:css && npm run lint:js",
-    "lint:cached": "npm run lint:css && npm run lint:js:cached",
     "lint:css": "stylelint ./src/**/*.css",
-    "lint:fix": "npm run lint:js:fix",
-    "lint:i18n": "babel-node ./scripts/lint-i18n.js",
     "lint:js": "eslint --ignore-path .gitignore ./src/",
-    "lint:js:cached": "eslint --cache --ignore-path .gitignore ./src/",
-    "lint:js:fix": "eslint --fix --ignore-path .gitignore ./src/",
     "test": "NODE_ENV=test mocha --compilers ejs:ejsify 'src/**/*.spec.js'",
-    "prepush": "npm run lint:cached"
+    "prepush": "npm run lint:cached",
+    "watch": "webpack --watch --config webpack/app"
   },
   "napa": {
     "qrcode-generator": "kazuhikoarase/qrcode-generator"
@@ -79,6 +74,7 @@
     "copy-webpack-plugin": "4.0.1",
     "core-js": "2.4.1",
     "coveralls": "2.11.16",
+    "cross-env": "5.1.1",
     "css-loader": "0.26.1",
     "ejs-loader": "0.3.0",
     "ejsify": "1.0.0",
@@ -131,9 +127,8 @@
     "stylelint": "7.9.0",
     "stylelint-config-standard": "16.0.0",
     "to-source": "2.0.3",
-    "uglify-js": "3.1.8",
     "url-loader": "0.5.7",
-    "webpack": "3.5.5",
+    "webpack": "2.2.1",
     "webpack-bundle-size-analyzer": "2.5.0",
     "webpack-dev-middleware": "1.10.1",
     "webpack-error-notification": "0.1.6",
@@ -142,8 +137,8 @@
     "yargs": "6.6.0"
   },
   "dependencies": {
-    "@parity/wordlist": "1.0.1",
-    "arraybuffer-loader": "0.2.2",
+    "@parity/api": "2.1.x",
+    "@parity/wordlist": "1.1.x",
     "base32.js": "0.1.0",
     "bignumber.js": "3.0.1",
     "blockies": "0.0.2",
@@ -207,6 +202,7 @@
     "sw-toolbox": "^3.6.0",
     "u2f-api": "0.0.9",
     "u2f-api-polyfill": "0.4.3",
+    "uglify-js": "2.8.16",
     "useragent.js": "0.5.6",
     "utf8": "2.1.2",
     "valid-url": "1.0.9",
@@ -214,7 +210,6 @@
     "web3": "0.17.0-beta",
     "whatwg-fetch": "2.0.1",
     "worker-loader": "^0.8.0",
-    "yarn": "^0.21.3",
     "zxcvbn": "4.4.1"
   }
 }
