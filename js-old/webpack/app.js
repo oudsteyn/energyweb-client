@@ -48,8 +48,9 @@ const entry = isEmbed
 
 module.exports = {
   cache: !isProd,
-  devtool: isProd ? false : '#source-map',
-
+  devtool: isProd
+    ? false
+    : '#source-map',
   context: path.join(__dirname, '../src'),
   entry: entry,
   output: {
@@ -67,7 +68,7 @@ module.exports = {
       },
       {
         test: /\.js$/,
-        include: /(material-chip-input|ethereumjs-tx|wordlist)/,
+        include: /(material-chip-input|ethereumjs-tx)/,
         use: 'babel-loader'
       },
       {
@@ -214,6 +215,7 @@ module.exports = {
 
         new CopyWebpackPlugin([
           { from: './error_pages.css', to: 'styles.css' },
+          { from: './manifest.json', to: 'manifest.json' },
           { from: 'dapps/static' }
         ], {})
       );
