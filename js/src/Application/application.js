@@ -35,7 +35,7 @@ import Snackbar from '../Snackbar';
 import Status from '../Status';
 import UpgradeParity from '../UpgradeParity';
 
-import parityLogo from '../../assets/ewf-logo-no-text.png';
+import parityLogo from '../../assets/images/ewf-logo-no-text.png';
 import Store from './store';
 import styles from './application.css';
 
