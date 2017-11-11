@@ -36,7 +36,7 @@ const DAPPS_ALL = []
   .filter((dapp) => !dapp.skipBuild)
   .filter((dapp) => dapp.package);
 
-const FAVICON = path.resolve(__dirname, '../node_modules/@parity/shared/assets/images/parity-logo-black-no-text.png');
+const FAVICON = path.resolve(__dirname, '../assets/images/ewf-logo-no-text.ico');
 
 const DEST = process.env.BUILD_DEST || '.build';
 const ENV = process.env.NODE_ENV || 'development';
