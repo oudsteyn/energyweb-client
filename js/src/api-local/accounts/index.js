@@ -14,13 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-module.exports = {
-  test: /\.js$/,
-  include: /(dapp-|plugin-|oo7)/,
-  use: [ {
-    loader: 'happypack/loader',
-    options: {
-      id: 'babel'
-    }
-  } ]
-};
+const Accounts = require('./accounts');
+
+const accounts = new Accounts();
+
+module.exports = accounts;

@@ -29,14 +29,14 @@ const rulesEs6 = require('./rules/es6');
 const rulesParity = require('./rules/parity');
 const Shared = require('./shared');
 
-const DAPPS_BUILTIN = require('@parity/shared/config/dappsBuiltin.json');
-const DAPPS_VIEWS = require('@parity/shared/config/dappsViews.json');
+const DAPPS_BUILTIN = require('@parity/shared/lib/config/dappsBuiltin.json');
+const DAPPS_VIEWS = require('@parity/shared/lib/config/dappsViews.json');
 const DAPPS_ALL = []
   .concat(DAPPS_BUILTIN, DAPPS_VIEWS)
   .filter((dapp) => !dapp.skipBuild)
   .filter((dapp) => dapp.package);
 
-const FAVICON = path.resolve(__dirname, '../assets/ewf-logo-no-text.png');
+const FAVICON = path.resolve(__dirname, '../node_modules/@parity/shared/assets/images/parity-logo-black-no-text.png');
 
 const DEST = process.env.BUILD_DEST || '.build';
 const ENV = process.env.NODE_ENV || 'development';
@@ -46,7 +46,7 @@ const isProd = ENV === 'production';
 const isEmbed = EMBED === '1' || EMBED === 'true';
 
 const entry = isEmbed
-  ? { embed: './embed.js' }
+  ? { embed: ['babel-polyfill', './embed.js'] }
   : { bundle: ['babel-polyfill', './index.parity.js'] };
 
 module.exports = {
@@ -184,6 +184,14 @@ module.exports = {
         new CopyWebpackPlugin(
           flatten([
             {
+              from: path.join(__dirname, '../src/dev.web3.html'),
+              to: 'dev.web3/index.html'
+            },
+            {
+              from: path.join(__dirname, '../src/dev.parity.html'),
+              to: 'dev.parity/index.html'
+            },
+            {
               from: path.join(__dirname, '../src/error_pages.css'),
               to: 'styles.css'
             },
@@ -209,8 +217,11 @@ module.exports = {
                     : Api.util.sha3(dapp.url);
 
                   return [
-                    'index.html', 'dist.css', 'dist.css.map', 'dist.js', 'dist.js.map'
+                    'index.html', 'dist.css', 'dist.js',
+                    isProd ? null : 'dist.css.map',
+                    isProd ? null : 'dist.js.map'
                   ]
+                  .filter((file) => file)
                   .map((file) => path.join(dir, file))
                   .filter((from) => fs.existsSync(from))
                   .map((from) => ({
@@ -235,7 +246,7 @@ module.exports = {
         new HtmlWebpackPlugin({
           title: 'Parity Bar',
           filename: 'embed.html',
-          template: './index.ejs',
+          template: './index.parity.ejs',
           favicon: FAVICON,
           chunks: ['embed']
         })

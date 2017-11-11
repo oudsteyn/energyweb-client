@@ -17,7 +17,7 @@
 import React from 'react';
 import { FormattedMessage } from 'react-intl';
 
-import imagesEthcore from '../../../assets/ewf-logo.svg';
+import imagesEthcore from '../../../assets/images/ewf-logo.svg';
 
 import styles from '../firstRun.css';
 
