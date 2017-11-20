@@ -51,7 +51,7 @@ Once you have rustup, install parity or download and build from source
 ```bash
 # download energyweb-client code
 $ git clone https://github.com/energywebfoundation/energyweb-client
-$ cd parity-ewf
+$ cd energyweb-client
 
 # build in release mode
 $ cargo build --release
