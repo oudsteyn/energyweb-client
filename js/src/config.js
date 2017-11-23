@@ -14,4 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-export default from './request';
+// import appLogoDark from '../assets/parity-logo-black.png';
+// import appLogoDarkNoText from '@parity/shared/assets/images/parity-logo-black-no-text.svg';
+// import appLogoLight from '@parity/shared/assets/images/parity-logo-white.svg';
+
+import appLogoDark from '../assets/images/ewf-logo-no-text.png';
+import appLogoDarkNoText from '../assets/images/ewf-logo-no-text.png';
+import appLogoLight from '../assets/images/ewf-logo-no-text.png';
+
+export {
+  appLogoDark,
+  appLogoDarkNoText,
+  appLogoLight
+};
