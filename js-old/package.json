@@ -27,9 +27,8 @@
   ],
   "scripts": {
     "install": "napa",
-    "build": "npm run build:lib && npm run build:dll && npm run build:app",
+    "build": "npm run build:dll && npm run build:app",
     "build:app": "webpack --config webpack/app",
-    "build:lib": "webpack --config webpack/libraries",
     "build:dll": "webpack --config webpack/vendor",
     "ci:build": "cross-env NODE_ENV=production npm run build",
     "clean": "rimraf ./.build ./.coverage ./.happypack ./.npmjs ./build ./node_modules/.cache",
@@ -37,7 +36,6 @@
     "lint:css": "stylelint ./src/**/*.css",
     "lint:js": "eslint --ignore-path .gitignore ./src/",
     "test": "NODE_ENV=test mocha --compilers ejs:ejsify 'src/**/*.spec.js'",
-    "prepush": "npm run lint:cached",
     "watch": "webpack --watch --config webpack/app"
   },
   "napa": {
@@ -95,7 +93,6 @@
     "html-loader": "0.4.4",
     "html-webpack-plugin": "2.28.0",
     "http-proxy-middleware": "0.17.3",
-    "husky": "0.13.1",
     "ignore-styles": "5.0.1",
     "istanbul": "1.0.0-alpha.2",
     "jsdom": "9.11.0",
@@ -137,6 +134,7 @@
     "yargs": "6.6.0"
   },
   "dependencies": {
+    "@parity/abi": "2.1.x",
     "@parity/api": "2.1.x",
     "@parity/wordlist": "1.1.x",
     "base32.js": "0.1.0",
