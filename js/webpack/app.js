@@ -1,4 +1,3 @@
-
 // Copyright 2015-2017 Parity Technologies (UK) Ltd.
 // This file is part of Parity.
 
@@ -18,6 +17,7 @@
 const Api = require('@parity/api');
 const fs = require('fs');
 const path = require('path');
+const rimraf = require('rimraf');
 const flatten = require('lodash.flatten');
 // const ReactIntlAggregatePlugin = require('react-intl-aggregate-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
@@ -174,7 +174,7 @@ module.exports = {
         plugins,
 
         new HtmlWebpackPlugin({
-          title: 'Parity',
+          title: 'Energy Web Foundation',
           filename: 'index.html',
           template: './index.parity.ejs',
           favicon: FAVICON,
@@ -208,7 +208,7 @@ module.exports = {
                 .map((dapp) => {
                   const dir = path.join(__dirname, '../node_modules', dapp.package);
 
-                  if (!fs.existsSync(path.join(dir, 'dist'))) {
+                  if (!fs.existsSync(dir)) {
                     return null;
                   }
 
@@ -216,8 +216,17 @@ module.exports = {
                     ? dapp.id
                     : Api.util.sha3(dapp.url);
 
+                  if (!fs.existsSync(path.join(dir, 'dist'))) {
+                    rimraf.sync(path.join(dir, 'node_modules'));
+
+                    return {
+                      from: path.join(dir),
+                      to: `dapps/${destination}/`
+                    };
+                  }
+
                   return [
-                    'index.html', 'dist.css', 'dist.js',
+                    'icon.png', 'index.html', 'dist.css', 'dist.js',
                     isProd ? null : 'dist.css.map',
                     isProd ? null : 'dist.js.map'
                   ]
