@@ -64,7 +64,7 @@ pub fn version_data() -> Bytes {
 		(env!("CARGO_PKG_VERSION_MINOR").parse::<u32>().expect("Environment variables are known to be valid; qed") << 8) +
 		env!("CARGO_PKG_VERSION_PATCH").parse::<u32>().expect("Environment variables are known to be valid; qed");
 	s.append(&v);
-	s.append(&"Parity");
+	s.append(&"Energy Web");
 	s.append(&rustc_version());
 	s.append(&&Target::os()[0..2]);
 	s.out()
