@@ -18,9 +18,9 @@
 // import appLogoDarkNoText from '@parity/shared/assets/images/parity-logo-black-no-text.svg';
 // import appLogoLight from '@parity/shared/assets/images/parity-logo-white.svg';
 
-import appLogoDark from '../assets/images/ewf-logo-no-text.png';
-import appLogoDarkNoText from '../assets/images/ewf-logo-no-text.png';
-import appLogoLight from '../assets/images/ewf-logo-no-text.png';
+import appLogoDark from '../assets/images/ewf-logo-no-text.svg';
+import appLogoDarkNoText from '../assets/images/ewf-logo-no-text.svg';
+import appLogoLight from '../assets/images/ewf-logo-no-text.svg';
 
 export {
   appLogoDark,
