@@ -174,7 +174,7 @@ module.exports = {
         plugins,
 
         new HtmlWebpackPlugin({
-          title: 'Energy Web Foundation',
+          title: 'Energy Web',
           filename: 'index.html',
           template: './index.parity.ejs',
           favicon: FAVICON,
