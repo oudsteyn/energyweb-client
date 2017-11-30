@@ -53,7 +53,7 @@ pub fn version() -> String {
 	let sha3_dash = if sha3.is_empty() { "" } else { "-" };
 	let commit_date = commit_date().replace("-", "");
 	let date_dash = if commit_date.is_empty() { "" } else { "-" };
-	format!("Parity/v{}-{}{}{}{}{}/{}/rustc{}", env!("CARGO_PKG_VERSION"), THIS_TRACK, sha3_dash, sha3, date_dash, commit_date, platform(), rustc_version())
+	format!("Energy/Web/v{}-{}{}{}{}{}/{}/rustc{}", env!("CARGO_PKG_VERSION"), THIS_TRACK, sha3_dash, sha3, date_dash, commit_date, platform(), rustc_version())
 }
 
 /// Get the standard version data for this software.
