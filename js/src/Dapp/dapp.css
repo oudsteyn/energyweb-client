@@ -17,10 +17,13 @@
 
 .frame {
   background: white;
+  box-sizing: border-box;
   border: 0;
-  position: absolute;
-  height: 100%;
+  flex-grow: 1;
+  opacity: 0;
   width: 100%;
+  z-index: 1;
+  background: white;
 }
 
 .full {
@@ -32,18 +35,4 @@
   font-family: 'Roboto', sans-serif;
   font-size: 16px;
   font-weight: 300;
-
-  .text {
-    text-align: center;
-    padding: 5em;
-    font-size: 2em;
-    opacity: 0.75;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    img {
-      max-width: 10em;
-      height: auto;
-    }
-  }
 }

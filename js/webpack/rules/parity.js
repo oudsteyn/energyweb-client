@@ -16,7 +16,7 @@
 
 module.exports = {
   test: /\.js$/,
-  include: /node_modules\/@parity\//,
+  include: /(dapp-|plugin-|oo7)/,
   use: [ {
     loader: 'happypack/loader',
     options: {

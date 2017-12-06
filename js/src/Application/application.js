@@ -20,9 +20,9 @@ import { FormattedMessage } from 'react-intl';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
-import HardwareStore from '@parity/shared/mobx/hardwareStore';
-import UpgradeStore from '@parity/shared/mobx/upgradeParity';
-import Errors from '@parity/ui/Errors';
+import HardwareStore from '@parity/shared/lib/mobx/hardwareStore';
+import UpgradeStore from '@parity/shared/lib/mobx/upgradeParity';
+import Errors from '@parity/ui/lib/Errors';
 
 import Connection from '../Connection';
 import DappRequests from '../DappRequests';
@@ -35,6 +35,7 @@ import Snackbar from '../Snackbar';
 import Status from '../Status';
 import UpgradeParity from '../UpgradeParity';
 
+import { appLogoDark as parityLogo } from '../config';
 import Store from './store';
 import styles from './application.css';
 
@@ -77,6 +78,11 @@ class Application extends Component {
     return (
       <div className={ styles.application }>
         {
+          blockNumber
+            ? <Status upgradeStore={ this.upgradeStore } />
+            : null
+        }
+        {
           isMinimized
             ? this.renderMinimized()
             : this.renderApp()
@@ -98,11 +104,6 @@ class Application extends Component {
           alwaysHidden
           dapp={ isMinimized }
         />
-        {
-          blockNumber
-            ? <Status upgradeStore={ this.upgradeStore } />
-            : null
-        }
       </div>
     );
   }
@@ -132,6 +133,9 @@ class Application extends Component {
 
     return (
       <div className={ styles.container }>
+        <div className={ styles.logo }>
+          <img src={ parityLogo } />
+        </div>
         <Errors />
         { children }
       </div>
@@ -141,11 +145,9 @@ class Application extends Component {
 
 function mapStateToProps (state) {
   const { blockNumber } = state.nodeStatus;
-  const { hasAccounts } = state.personal;
 
   return {
-    blockNumber,
-    hasAccounts
+    blockNumber
   };
 }
 

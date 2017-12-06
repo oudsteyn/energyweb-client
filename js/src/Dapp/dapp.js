@@ -20,12 +20,10 @@ import { FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
 
 import Api from '@parity/api';
-import builtinDapps from '@parity/shared/config/dappsBuiltin.json';
-import viewsDapps from '@parity/shared/config/dappsViews.json';
-import DappsStore from '@parity/shared/mobx/dappsStore';
-import HistoryStore from '@parity/shared/mobx/historyStore';
-
-import ParityLogo from '../../assets/ewf-logo.svg';
+import builtinDapps from '@parity/shared/lib/config/dappsBuiltin.json';
+import viewsDapps from '@parity/shared/lib/config/dappsViews.json';
+import DappsStore from '@parity/shared/lib/mobx/dappsStore';
+import HistoryStore from '@parity/shared/lib/mobx/historyStore';
 
 import styles from './dapp.css';
 
@@ -92,16 +90,7 @@ export default class Dapp extends Component {
     const { app, loading } = this.state;
 
     if (loading) {
-      return (
-        <div className={ styles.full }>
-          <div className={ styles.text }>
-            <img
-              src={ ParityLogo }
-              alt='Parity Ltd.'
-            />
-          </div>
-        </div>
-      );
+      return null;
     }
 
     if (!app) {
@@ -121,7 +110,9 @@ export default class Dapp extends Component {
 
     switch (app.type) {
       case 'local':
-        src = `${dappsUrl}/${app.id}/`;
+        src = app.localUrl
+          ? `${app.localUrl}?appId=${app.id}`
+          : `${dappsUrl}/${app.id}/`;
         break;
 
       case 'network':
@@ -159,11 +150,19 @@ export default class Dapp extends Component {
       <iframe
         className={ styles.frame }
         frameBorder={ 0 }
+        id='dappFrame'
         name={ name }
+        onLoad={ this.onDappLoad }
         sandbox='allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation'
         scrolling='auto'
         src={ `${src}${hash}` }
       />
     );
+  }
+
+  onDappLoad = () => {
+    const frame = document.getElementById('dappFrame');
+
+    frame.style.opacity = 1;
   }
 }

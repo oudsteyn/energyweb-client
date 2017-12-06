@@ -9,9 +9,9 @@ variables:
   RUSTFLAGS: ""
   CARGOFLAGS: ""
   CI_SERVER_NAME: "GitLab CI"
-cache:
-  key: "$CI_BUILD_STAGE/$CI_BUILD_REF_NAME"
-  untracked: true
+# cache:
+#   key: "$CI_BUILD_STAGE/$CI_BUILD_REF_NAME"
+#   untracked: true
 linux-stable:
   stage: build
   image: parity/rust:gitlab-ci
@@ -23,7 +23,7 @@ linux-stable:
     - triggers
   script:
     - rustup default stable
-    - cargo build -j $(nproc) --release --features final $CARGOFLAGS
+    - cargo build -j $(nproc) --release --no-default-features --features ui $CARGOFLAGS
     - cargo build -j $(nproc) --release -p evmbin
     - cargo build -j $(nproc) --release -p ethstore-cli
     - cargo build -j $(nproc) --release -p ethkey-cli
@@ -90,7 +90,7 @@ linux-snap:
     paths:
     - scripts/parity_*_amd64.snap
     name: "stable-x86_64-unknown-snap-gnu_parity"
-  allow_failure: true  
+  allow_failure: true
 linux-stable-debian:
   stage: build
   image: parity/rust-debian:gitlab-ci
@@ -226,7 +226,7 @@ linux-i686:
     - strip target/$PLATFORM/release/parity
     - strip target/$PLATFORM/release/parity-evm
     - strip target/$PLATFORM/release/ethstore
-    - strip target/$PLATFORM/release/ethkey   
+    - strip target/$PLATFORM/release/ethkey
     - strip target/$PLATFORM/release/parity
     - md5sum target/$PLATFORM/release/parity > parity.md5
     - export SHA3=$(target/$PLATFORM/release/parity tools hash target/$PLATFORM/release/parity)
@@ -427,7 +427,7 @@ darwin:
       export PLATFORM=x86_64-apple-darwin
       rustup default stable
       cargo clean
-      cargo build -j 8 --features final --release #$CARGOFLAGS
+      cargo build -j 8 --release --no-default-features --features ui  #$CARGOFLAGS
       cargo build -j 8 --release -p ethstore-cli #$CARGOFLAGS
       cargo build -j 8 --release -p ethkey-cli #$CARGOFLAGS
       cargo build -j 8 --release -p evmbin #$CARGOFLAGS
@@ -459,9 +459,9 @@ darwin:
     - target/release/parity
     name: "x86_64-apple-darwin_parity"
 windows:
-  cache:
-    key: "%CI_BUILD_STAGE%/%CI_BUILD_REF_NAME%"
-    untracked: true
+  # cache:
+  #   key: "%CI_BUILD_STAGE%/%CI_BUILD_REF_NAME%"
+  #   untracked: true
   stage: build
   only:
     - master
@@ -477,10 +477,19 @@ windows:
     - set RUST_BACKTRACE=1
     - set RUSTFLAGS=%RUSTFLAGS%
     - rustup default stable-x86_64-pc-windows-msvc
+    #- cd
     - cargo clean
+    - dir
     - git config --global url."https://".insteadOf git://
-    #- cd js&&npm install object-keys path-dirname extract-zip fd-slicer lodash lodash._basetostring lodash._baseassign lodash._basecopy lodash._basecreate lodash._basevalues lodash._isiterateecall lodash._reinterpolate lodash.escape lodash.keys lodash.restparam lodash.templatesettings lodash._reescape lodash._reevaluate lodash._getnative lodash._reescape lodash._reevaluate lodash._root lodash.assign lodash.assignin lodash.bind lodash.camelcase lodash.create lodash.defaults lodash.filter lodash.flatten lodash.foreach lodash.isarguments lodash.isarray lodash.isequal lodash.isplainobject lodash.keys lodash.map lodash.memoize lodash.merge lodash.omitby lodash.pick lodash.pickby lodash.reduce lodash.reject lodash.some lodash.throttle lodash.uniq lodash.merge --save&&npm install&&cd ..
-    - cargo build --features final --release #%CARGOFLAGS%
+    #- npm install --save object-keys path-dirname extract-zip fd-slicer lodash lodash._basetostring lodash._baseassign lodash._basecopy lodash._basecreate lodash._basevalues lodash._isiterateecall lodash._reinterpolate lodash.escape lodash.keys lodash.restparam lodash.templatesettings lodash._reescape lodash._reevaluate lodash._getnative lodash._reescape lodash._reevaluate lodash._root lodash.assign lodash.assignin lodash.bind lodash.camelcase lodash.create lodash.defaults lodash.filter lodash.flatten lodash.foreach lodash.isarguments lodash.isequal lodash.isplainobject lodash.keys lodash.map lodash.memoize lodash.merge lodash.omitby lodash.pick  lodash.reduce lodash.reject lodash.some lodash.throttle lodash.uniq
+    #- del /Q js
+    #- xcopy /S /E /Y c:\r\js js\
+    #- cd js
+    #- dir
+    #- npm install
+    #- cd ..
+    - dir
+    - cargo build --release --no-default-features --features ui
     - cargo build --release -p ethstore-cli #%CARGOFLAGS%
     - cargo build --release -p ethkey-cli #%CARGOFLAGS%
     - cargo build --release -p evmbin #%CARGOFLAGS%
@@ -656,10 +665,11 @@ js-release:
   before_script:
     - export JS_FILES_MODIFIED=$(git --no-pager diff --name-only $CI_BUILD_REF^ $CI_BUILD_REF | grep ^js/ | wc -l)
     - echo $JS_FILES_MODIFIED
-    - if [ $JS_FILES_MODIFIED -eq 0  ]; then echo "Skipping JS deps install since no JS files modified."; else ./js/scripts/install-deps.sh;fi
+    # - if [ $JS_FILES_MODIFIED -eq 0  ]; then echo "Skipping JS deps install since no JS files modified."; else ./js/scripts/install-deps.sh;fi
   script:
-    - rustup default stable
+    # - rustup default stable
     - echo $JS_FILES_MODIFIED
-    - if [ $JS_FILES_MODIFIED -eq 0 ]; then echo "Skipping JS rebuild since no JS files modified."; else ./js/scripts/build.sh && ./js/scripts/release.sh; fi
+    # - if [ $JS_FILES_MODIFIED -eq 0 ]; then echo "Skipping JS rebuild since no JS files modified."; else ./js/scripts/build.sh && ./js/scripts/release.sh; fi
   tags:
    - javascript
+  allow_failure: true
