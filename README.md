@@ -8,11 +8,11 @@ Download this repository and compile from source or get the binaries.
 
 ## Binaries
 
-#### [Linux](https://s3-us-west-2.amazonaws.com/builds-parity-published/ewf/x86_64-unknown-linux-gnu/parity)
+#### [Linux](https://tobalaba.slock.it/download/ewf-client-linux)
 
-#### [Windows](https://s3-us-west-2.amazonaws.com/builds-parity-published/ewf/x86_64-pc-windows-msvc/InstallParity.exe)
+#### [Windows](https://tobalaba.slock.it/download/ewf-client-windows.exe)
 
-#### [Mac](https://s3-us-west-2.amazonaws.com/builds-parity-published/ewf/x86_64-apple-darwin/parity)
+#### [Mac](https://tobalaba.slock.it/download/ewf-client-mac)
 
 
 ## Build dependencies
