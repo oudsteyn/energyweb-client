@@ -12,7 +12,7 @@ Download this repository and compile from source or get the binaries.
 
 #### [Windows](https://tobalaba.slock.it/download/ewf-client-windows.exe)
 
-#### [Mac](https://tobalaba.slock.it/download/ewf-client-mac)
+#### [Mac](https://tobalaba.slock.it/download/ewf-client-mac.zip)
 
 
 ## Build dependencies
