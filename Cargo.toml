@@ -82,14 +82,10 @@ winapi = "0.2"
 daemonize = "0.2"
 
 [features]
-default = ["ui-precompiled"]
+default = ["ui"]
 ui = [
 	"ui-enabled",
 	"parity-dapps/ui",
-]
-ui-precompiled = [
-	"ui-enabled",
-	"parity-dapps/ui-precompiled",
 ]
 ui-enabled = ["dapps"]
 dapps = ["parity-dapps"]
