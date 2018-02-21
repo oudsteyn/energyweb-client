@@ -64,7 +64,7 @@ Note: if cargo fails to parse manifest try:
 $ ~/.cargo/bin/cargo build --release
 ```
 
->>If the build is failed due to `package-lock.json` sha-1 integrity check failed, please delete all `package-lock.json` files. They are present in root repo folder, `js` and `js-old`.
+> If the build is failed due to `package-lock.json` sha-1 integrity check failed, please delete all `package-lock.json` files. They are present in root repo folder, `js` and `js-old`.
 
 ----
 
