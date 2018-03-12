@@ -54,7 +54,7 @@ $ git clone https://github.com/energywebfoundation/energyweb-client
 $ cd energyweb-client
 
 # build in release mode
-$ cargo build --release --no-default-features --features ui
+$ cargo build --release
 ```
 
 This will produce an executable in the `./target/release` subdirectory.
