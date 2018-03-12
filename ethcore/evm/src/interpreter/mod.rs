@@ -66,7 +66,6 @@ struct CodeReader<'a> {
 	code: &'a [u8]
 }
 
-#[cfg_attr(feature="dev", allow(len_without_is_empty))]
 impl<'a> CodeReader<'a> {
 
 	/// Create new code reader - starting at position 0.
@@ -287,7 +286,6 @@ impl<Cost: CostType> Interpreter<Cost> {
 		}
 	}
 
-	#[cfg_attr(feature="dev", allow(too_many_arguments))]
 	fn exec_instruction(
 		&mut self,
 		gas: Cost,
@@ -322,19 +320,23 @@ impl<Cost: CostType> Interpreter<Cost> {
 				let init_off = stack.pop_back();
 				let init_size = stack.pop_back();
 
-				let address_scheme = if instruction == instructions::CREATE { CreateContractAddress::FromSenderAndNonce } else { CreateContractAddress::FromSenderAndCodeHash };
 				let create_gas = provided.expect("`provided` comes through Self::exec from `Gasometer::get_gas_cost_mem`; `gas_gas_mem_cost` guarantees `Some` when instruction is `CALL`/`CALLCODE`/`DELEGATECALL`/`CREATE`; this is `CREATE`; qed");
 
-				let contract_code = self.mem.read_slice(init_off, init_size);
-				let can_create = ext.balance(&params.address)? >= endowment && ext.depth() < ext.schedule().max_depth;
+				if ext.is_static() {
+					return Err(vm::Error::MutableCallInStaticContext);
+				}
 
 				// clear return data buffer before creating new call frame.
 				self.return_data = ReturnData::empty();
 
+				let can_create = ext.balance(&params.address)? >= endowment && ext.depth() < ext.schedule().max_depth;
 				if !can_create {
 					stack.push(U256::zero());
 					return Ok(InstructionResult::UnusedGas(create_gas));
 				}
+
+				let contract_code = self.mem.read_slice(init_off, init_size);
+				let address_scheme = if instruction == instructions::CREATE { CreateContractAddress::FromSenderAndNonce } else { CreateContractAddress::FromSenderAndCodeHash };
 
 				let create_result = ext.create(&create_gas.as_u256(), &endowment, contract_code, address_scheme);
 				return match create_result {
@@ -350,9 +352,6 @@ impl<Cost: CostType> Interpreter<Cost> {
 					ContractCreateResult::Failed => {
 						stack.push(U256::zero());
 						Ok(InstructionResult::Ok)
-					},
-					ContractCreateResult::FailedInStaticCall => {
-						Err(vm::Error::MutableCallInStaticContext)
 					},
 				};
 			},
@@ -915,8 +914,13 @@ mod tests {
 	use rustc_hex::FromHex;
 	use vmtype::VMType;
 	use factory::Factory;
-	use vm::{ActionParams, ActionValue};
+	use vm::{Vm, ActionParams, ActionValue};
 	use vm::tests::{FakeExt, test_finalize};
+	use bigint::prelude::U256;
+
+	fn interpreter(gas: &U256) -> Box<Vm> {
+		Factory::new(VMType::Interpreter, 1).create(gas)
+	}
 
 	#[test]
 	fn should_not_fail_on_tracing_mem() {
@@ -933,7 +937,7 @@ mod tests {
 		ext.tracing = true;
 
 		let gas_left = {
-			let mut vm = Factory::new(VMType::Interpreter, 1).create(params.gas);
+			let mut vm = interpreter(&params.gas);
 			test_finalize(vm.exec(params, &mut ext)).unwrap()
 		};
 
@@ -955,7 +959,7 @@ mod tests {
 		ext.tracing = true;
 
 		let err = {
-			let mut vm = Factory::new(VMType::Interpreter, 1).create(params.gas);
+			let mut vm = interpreter(&params.gas);
 			test_finalize(vm.exec(params, &mut ext)).err().unwrap()
 		};
 

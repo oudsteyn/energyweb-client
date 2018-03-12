@@ -4,7 +4,7 @@ set -e
 # variables
 PVER="1-9"
 UTCDATE=`date -u "+%Y%m%d-%H%M%S"`
-BRANCH=$CI_BUILD_REF_NAME
+BRANCH="beta"
 GIT_PARITY="https://${GITHUB_JS_PRECOMPILED}:@github.com/paritytech/parity.git"
 
 echo "*** [cargo] Setting up GitHub config for parity"
@@ -13,6 +13,7 @@ git config merge.ours.driver true
 git config user.email "$GITHUB_EMAIL"
 git config user.name "GitLab Build Bot"
 git remote set-url origin $GIT_PARITY > /dev/null 2>&1
+git checkout $BRANCH
 git reset --hard origin/$BRANCH 2>/dev/null
 git submodule update
 

@@ -40,7 +40,7 @@ use executed::{Executed, ExecutionError};
 use types::state_diff::StateDiff;
 use transaction::SignedTransaction;
 use state_db::StateDB;
-use evm::{Factory as EvmFactory};
+use factory::VmFactory;
 
 use bigint::prelude::U256;
 use bigint::hash::H256;
@@ -62,19 +62,19 @@ pub use self::backend::Backend;
 pub use self::substate::Substate;
 
 /// Used to return information about an `State::apply` operation.
-pub struct ApplyOutcome {
+pub struct ApplyOutcome<T, V> {
 	/// The receipt for the applied transaction.
 	pub receipt: Receipt,
 	/// The output of the applied transaction.
 	pub output: Bytes,
 	/// The trace for the applied transaction, empty if tracing was not produced.
-	pub trace: Vec<FlatTrace>,
+	pub trace: Vec<T>,
 	/// The VM trace for the applied transaction, None if tracing was not produced.
-	pub vm_trace: Option<VMTrace>
+	pub vm_trace: Option<V>
 }
 
 /// Result type for the execution ("application") of a transaction.
-pub type ApplyResult = Result<ApplyOutcome, Error>;
+pub type ApplyResult<T, V> = Result<ApplyOutcome<T, V>, Error>;
 
 /// Return type of proof validity check.
 #[derive(Debug, Clone)]
@@ -376,7 +376,7 @@ impl<B: Backend> State<B> {
 	}
 
 	/// Get a VM factory that can execute on this state.
-	pub fn vm_factory(&self) -> EvmFactory {
+	pub fn vm_factory(&self) -> VmFactory {
 		self.factories.vm.clone()
 	}
 
@@ -604,7 +604,6 @@ impl<B: Backend> State<B> {
 	}
 
 	/// Add `incr` to the balance of account `a`.
-	#[cfg_attr(feature="dev", allow(single_match))]
 	pub fn add_balance(&mut self, a: &Address, incr: &U256, cleanup_mode: CleanupMode) -> trie::Result<()> {
 		trace!(target: "state", "add_balance({}, {}): {}", a, incr, self.balance(a)?);
 		let is_value_transfer = !incr.is_zero();
@@ -668,7 +667,7 @@ impl<B: Backend> State<B> {
 
 	/// Execute a given transaction, producing a receipt and an optional trace.
 	/// This will change the state accordingly.
-	pub fn apply(&mut self, env_info: &EnvInfo, machine: &Machine, t: &SignedTransaction, tracing: bool) -> ApplyResult {
+	pub fn apply(&mut self, env_info: &EnvInfo, machine: &Machine, t: &SignedTransaction, tracing: bool) -> ApplyResult<FlatTrace, VMTrace> {
 		if tracing {
 			let options = TransactOptions::with_tracing();
 			self.apply_with_tracing(env_info, machine, t, options.tracer, options.vm_tracer)
@@ -687,7 +686,7 @@ impl<B: Backend> State<B> {
 		t: &SignedTransaction,
 		tracer: T,
 		vm_tracer: V,
-	) -> ApplyResult where
+	) -> ApplyResult<T::Output, V::Output> where
 		T: trace::Tracer,
 		V: trace::VMTracer,
 	{
@@ -728,7 +727,7 @@ impl<B: Backend> State<B> {
 	// `virt` signals that we are executing outside of a block set and restrictions like
 	// gas limits and gas costs should be lifted.
 	fn execute<T, V>(&mut self, env_info: &EnvInfo, machine: &Machine, t: &SignedTransaction, options: TransactOptions<T, V>, virt: bool)
-		-> Result<Executed, ExecutionError> where T: trace::Tracer, V: trace::VMTracer,
+		-> Result<Executed<T::Output, V::Output>, ExecutionError> where T: trace::Tracer, V: trace::VMTracer,
 	{
 		let mut e = Executive::new(self, env_info, machine);
 
@@ -744,8 +743,6 @@ impl<B: Backend> State<B> {
 	}
 
 	/// Commits our cached account changes into the trie.
-	#[cfg_attr(feature="dev", allow(match_ref_pats))]
-	#[cfg_attr(feature="dev", allow(needless_borrow))]
 	pub fn commit(&mut self) -> Result<(), Error> {
 		// first, commit the sub trees.
 		let mut accounts = self.cache.borrow_mut();
@@ -1409,7 +1406,7 @@ mod tests {
 	}
 
 	#[test]
-	fn should_not_trace_delegatecall() {
+	fn should_trace_delegatecall_properly() {
 		init_log();
 
 		let mut state = get_temp_state();
@@ -1429,7 +1426,7 @@ mod tests {
 		}.sign(&secret(), None);
 
 		state.init_code(&0xa.into(), FromHex::from_hex("6000600060006000600b618000f4").unwrap()).unwrap();
-		state.init_code(&0xb.into(), FromHex::from_hex("6000").unwrap()).unwrap();
+		state.init_code(&0xb.into(), FromHex::from_hex("60056000526001601ff3").unwrap()).unwrap();
 		let result = state.apply(&info, &machine, &t, true).unwrap();
 
 		let expected_trace = vec![FlatTrace {
@@ -1444,23 +1441,23 @@ mod tests {
 				call_type: CallType::Call,
 			}),
 			result: trace::Res::Call(trace::CallResult {
-				gas_used: U256::from(721), // in post-eip150
+				gas_used: U256::from(736), // in post-eip150
 				output: vec![]
 			}),
 		}, FlatTrace {
 			trace_address: vec![0].into_iter().collect(),
 			subtraces: 0,
 			action: trace::Action::Call(trace::Call {
-				from: "9cce34f7ab185c7aba1b7c8140d620b4bda941d6".into(),
-				to: 0xa.into(),
+				from: 0xa.into(),
+				to: 0xb.into(),
 				value: 0.into(),
 				gas: 32768.into(),
 				input: vec![],
 				call_type: CallType::DelegateCall,
 			}),
 			result: trace::Res::Call(trace::CallResult {
-				gas_used: 3.into(),
-				output: vec![],
+				gas_used: 18.into(),
+				output: vec![5],
 			}),
 		}];
 

@@ -20,22 +20,12 @@ use std::time;
 use std::sync::Arc;
 use parking_lot::{Condvar, Mutex};
 use ethkey::{Public, Secret};
-use key_server_cluster::{Error, NodeId, SessionId, KeyStorage, DocumentKeyShare};
+use key_server_cluster::{Error, NodeId, SessionId, KeyStorage, DocumentKeyShare, DocumentKeyShareVersion};
 use key_server_cluster::math;
 use key_server_cluster::cluster::Cluster;
 use key_server_cluster::cluster_sessions::ClusterSession;
 use key_server_cluster::message::{Message, GenerationMessage, InitializeSession, ConfirmInitialization, CompleteInitialization,
 	KeysDissemination, PublicKeyShare, SessionError, SessionCompleted};
-
-/// Key generation session API.
-pub trait Session: Send + Sync + 'static {
-	/// Get generation session state.
-	fn state(&self) -> SessionState;
-	/// Wait until session is completed. Returns public portion of generated server key.
-	fn wait(&self, timeout: Option<time::Duration>) -> Result<Public, Error>;
-	/// Get joint public key (if it is known).
-	fn joint_public_and_secret(&self) -> Option<Result<(Public, Secret), Error>>;
-}
 
 /// Distributed key generation session.
 /// Based on "ECDKG: A Distributed Key Generation Protocol Based on Elliptic Curve Discrete Logarithm" paper:
@@ -226,6 +216,22 @@ impl SessionImpl {
 		self.data.lock().simulate_faulty_behaviour = true;
 	}
 
+	/// Get session state.
+	pub fn state(&self) -> SessionState {
+		self.data.lock().state.clone()
+	}
+
+	/// Wait for session completion.
+	pub fn wait(&self, timeout: Option<time::Duration>) -> Result<Public, Error> {
+		Self::wait_session(&self.completed, &self.data, timeout, |data| data.joint_public_and_secret.clone()
+			.map(|r| r.map(|r| r.0.clone())))
+	}
+
+	/// Get generated public and secret (if any).
+	pub fn joint_public_and_secret(&self) -> Option<Result<(Public, Secret), Error>> {
+		self.data.lock().joint_public_and_secret.clone()
+	}
+
 	/// Start new session initialization. This must be called on master node.
 	pub fn initialize(&self, author: Public, threshold: usize, nodes: BTreeSet<NodeId>) -> Result<(), Error> {
 		check_cluster_nodes(self.node(), &nodes)?;
@@ -291,8 +297,10 @@ impl SessionImpl {
 				self.on_keys_dissemination(sender.clone(), message),
 			&GenerationMessage::PublicKeyShare(ref message) =>
 				self.on_public_key_share(sender.clone(), message),
-			&GenerationMessage::SessionError(ref message) =>
-				self.on_session_error(sender, message),
+			&GenerationMessage::SessionError(ref message) => {
+				self.on_session_error(sender, Error::Io(message.error.clone().into()));
+				Ok(())
+			},
 			&GenerationMessage::SessionCompleted(ref message) => 
 				self.on_session_completed(sender.clone(), message),
 		}
@@ -500,15 +508,23 @@ impl SessionImpl {
 				return Err(Error::InvalidMessage);
 			}
 
+			// calculate joint public key
+			let joint_public = {
+				let public_shares = data.nodes.values().map(|n| n.public_share.as_ref().expect("keys received on KD phase; KG phase follows KD phase; qed"));
+				math::compute_joint_public(public_shares)?
+			};
+
 			// save encrypted data to key storage
 			let encrypted_data = DocumentKeyShare {
 				author: data.author.as_ref().expect("author is filled in initialization phase; KG phase follows initialization phase; qed").clone(),
 				threshold: data.threshold.expect("threshold is filled in initialization phase; KG phase follows initialization phase; qed"),
-				id_numbers: data.nodes.iter().map(|(node_id, node_data)| (node_id.clone(), node_data.id_number.clone())).collect(),
-				secret_share: data.secret_share.as_ref().expect("secret_share is filled in KG phase; we are at the end of KG phase; qed").clone(),
-				polynom1: data.polynom1.as_ref().expect("polynom1 is filled in KG phase; we are at the end of KG phase; qed").clone(),
+				public: joint_public,
 				common_point: None,
 				encrypted_point: None,
+				versions: vec![DocumentKeyShareVersion::new(
+					data.nodes.iter().map(|(node_id, node_data)| (node_id.clone(), node_data.id_number.clone())).collect(),
+					data.secret_share.as_ref().expect("secret_share is filled in KG phase; we are at the end of KG phase; qed").clone(),
+				)],
 			};
 			
 			if let Some(ref key_storage) = self.key_storage {
@@ -541,20 +557,6 @@ impl SessionImpl {
 
 		// we have received enough confirmations => complete session
 		data.state = SessionState::Finished;
-		self.completed.notify_all();
-
-		Ok(())
-	}
-
-	/// When error has occured on another node.
-	pub fn on_session_error(&self, sender: &NodeId, message: &SessionError) -> Result<(), Error> {
-		let mut data = self.data.lock();
-
-		warn!("{}: generation session failed with error: {} from {}", self.node(), message.error, sender);
-
-		data.state = SessionState::Failed;
-		data.key_share = Some(Err(Error::Io(message.error.clone())));
-		data.joint_public_and_secret = Some(Err(Error::Io(message.error.clone())));
 		self.completed.notify_all();
 
 		Ok(())
@@ -673,7 +675,7 @@ impl SessionImpl {
 	fn complete_generation(&self) -> Result<(), Error> {
 		let mut data = self.data.lock();
 		
-		// else - calculate joint public key
+		// calculate joint public key
 		let joint_public = {
 			let public_shares = data.nodes.values().map(|n| n.public_share.as_ref().expect("keys received on KD phase; KG phase follows KD phase; qed"));
 			math::compute_joint_public(public_shares)?
@@ -683,11 +685,13 @@ impl SessionImpl {
 		let encrypted_data = DocumentKeyShare {
 			author: data.author.as_ref().expect("author is filled in initialization phase; KG phase follows initialization phase; qed").clone(),
 			threshold: data.threshold.expect("threshold is filled in initialization phase; KG phase follows initialization phase; qed"),
-			id_numbers: data.nodes.iter().map(|(node_id, node_data)| (node_id.clone(), node_data.id_number.clone())).collect(),
-			secret_share: data.secret_share.as_ref().expect("secret_share is filled in KG phase; we are at the end of KG phase; qed").clone(),
-			polynom1: data.polynom1.as_ref().expect("polynom1 is filled in KG phase; we are at the end of KG phase; qed").clone(),
+			public: joint_public.clone(),
 			common_point: None,
 			encrypted_point: None,
+			versions: vec![DocumentKeyShareVersion::new(
+				data.nodes.iter().map(|(node_id, node_data)| (node_id.clone(), node_data.id_number.clone())).collect(),
+				data.secret_share.as_ref().expect("secret_share is filled in KG phase; we are at the end of KG phase; qed").clone(),
+			)],
 		};
 
 		// if we are at the slave node - wait for session completion
@@ -725,6 +729,16 @@ impl SessionImpl {
 }
 
 impl ClusterSession for SessionImpl {
+	type Id = SessionId;
+
+	fn type_name() -> &'static str {
+		"generation"
+	}
+
+	fn id(&self) -> SessionId {
+		self.id.clone()
+	}
+
 	fn is_finished(&self) -> bool {
 		let data = self.data.lock();
 		data.state == SessionState::Failed
@@ -754,29 +768,31 @@ impl ClusterSession for SessionImpl {
 		data.joint_public_and_secret = Some(Err(Error::NodeDisconnected));
 		self.completed.notify_all();
 	}
-}
 
-impl Session for SessionImpl {
-	fn state(&self) -> SessionState {
-		self.data.lock().state.clone()
-	}
-
-	fn wait(&self, timeout: Option<time::Duration>) -> Result<Public, Error> {
-		let mut data = self.data.lock();
-		if !data.joint_public_and_secret.is_some() {
-			match timeout {
-				None => self.completed.wait(&mut data),
-				Some(timeout) => { self.completed.wait_for(&mut data, timeout); },
-			}
+	fn on_session_error(&self, node: &NodeId, error: Error) {
+		// error in generation session is considered fatal
+		// => broadcast error if error occured on this node
+		if *node == self.self_node_id {
+			// do not bother processing send error, as we already processing error
+			let _ = self.cluster.broadcast(Message::Generation(GenerationMessage::SessionError(SessionError {
+				session: self.id.clone().into(),
+				session_nonce: self.nonce,
+				error: error.clone().into(),
+			})));
 		}
 
-		data.joint_public_and_secret.clone()
-			.expect("checked above or waited for completed; completed is only signaled when joint_public.is_some(); qed")
-			.map(|p| p.0)
+		let mut data = self.data.lock();
+		data.state = SessionState::Failed;
+		data.key_share = Some(Err(error.clone()));
+		data.joint_public_and_secret = Some(Err(error));
+		self.completed.notify_all();
 	}
 
-	fn joint_public_and_secret(&self) -> Option<Result<(Public, Secret), Error>> {
-		self.data.lock().joint_public_and_secret.clone()
+	fn on_message(&self, sender: &NodeId, message: &Message) -> Result<(), Error> {
+		match *message {
+			Message::Generation(ref message) => self.process_message(sender, message),
+			_ => unreachable!("cluster checks message to be correct before passing; qed"),
+		}
 	}
 }
 
@@ -852,12 +868,12 @@ pub mod tests {
 	use std::sync::Arc;
 	use std::collections::{BTreeSet, BTreeMap, VecDeque};
 	use tokio_core::reactor::Core;
-	use ethkey::{Random, Generator, Public};
-	use key_server_cluster::{NodeId, SessionId, Error, DummyKeyStorage};
+	use ethkey::{Random, Generator, Public, KeyPair};
+	use key_server_cluster::{NodeId, SessionId, Error, KeyStorage, DummyKeyStorage};
 	use key_server_cluster::message::{self, Message, GenerationMessage};
 	use key_server_cluster::cluster::tests::{DummyCluster, make_clusters, run_clusters, loop_until, all_connections_established};
 	use key_server_cluster::cluster_sessions::ClusterSession;
-	use key_server_cluster::generation_session::{Session, SessionImpl, SessionState, SessionParams};
+	use key_server_cluster::generation_session::{SessionImpl, SessionState, SessionParams};
 	use key_server_cluster::math;
 	use key_server_cluster::math::tests::do_encryption_and_decryption;
 
@@ -955,6 +971,26 @@ pub mod tests {
 		pub fn take_and_process_message(&mut self) -> Result<(), Error> {
 			let msg = self.take_message().unwrap();
 			self.process_message(msg)
+		}
+
+		pub fn compute_key_pair(&self, t: usize) -> KeyPair {
+			let secret_shares = self.nodes.values()
+				.map(|nd| nd.key_storage.get(&SessionId::default()).unwrap().unwrap().last_version().unwrap().secret_share.clone())
+				.take(t + 1)
+				.collect::<Vec<_>>();
+			let secret_shares = secret_shares.iter().collect::<Vec<_>>();
+			let id_numbers = self.nodes.iter()
+				.map(|(n, nd)| nd.key_storage.get(&SessionId::default()).unwrap().unwrap().last_version().unwrap().id_numbers[n].clone())
+				.take(t + 1)
+				.collect::<Vec<_>>();
+			let id_numbers = id_numbers.iter().collect::<Vec<_>>();
+			let joint_secret1 = math::compute_joint_secret_from_shares(t, &secret_shares, &id_numbers).unwrap();
+
+			let secret_values: Vec<_> = self.nodes.values().map(|s| s.session.joint_public_and_secret().unwrap().unwrap().1).collect();
+			let joint_secret2 = math::compute_joint_secret(secret_values.iter()).unwrap();
+			assert_eq!(joint_secret1, joint_secret2);
+
+			KeyPair::from_secret(joint_secret1).unwrap()
 		}
 	}
 
@@ -1276,7 +1312,7 @@ pub mod tests {
 			let mut core = Core::new().unwrap();
 
 			// prepare cluster objects for each node
-			let clusters = make_clusters(&core, 6022, num_nodes);
+			let clusters = make_clusters(&core, 6031, num_nodes);
 			run_clusters(&clusters);
 
 			// establish connections

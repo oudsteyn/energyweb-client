@@ -28,7 +28,7 @@ use ethstore::{
 	SimpleSecretStore, SecretStore, Error as SSError, EthStore, EthMultiStore,
 	random_string, SecretVaultRef, StoreAccountRef, OpaqueSecret,
 };
-use ethstore::dir::MemoryDirectory;
+use ethstore::accounts_dir::MemoryDirectory;
 use ethstore::ethkey::{Address, Message, Public, Secret, Random, Generator};
 use ethjson::misc::AccountMeta;
 use hardware_wallet::{Error as HardwareError, HardwareWalletManager, KeyPath, TransactionInfo};
@@ -178,6 +178,13 @@ impl AccountProvider {
 			}
 		}
 
+		if let Ok(accounts) = sstore.accounts() {
+			for account in accounts.into_iter().filter(|a| settings.blacklisted_accounts.contains(&a.address)) {
+				warn!("Local Account {} has a blacklisted (known to be weak) address and will be ignored",
+					account.address);
+			}
+		}
+
 		// Remove blacklisted accounts from address book.
 		let mut address_book = AddressBook::new(&sstore.local_path());
 		for addr in &settings.blacklisted_accounts {
@@ -257,9 +264,9 @@ impl AccountProvider {
 		Ok(Address::from(account.address).into())
 	}
 
-	/// Import a new presale wallet.
-	pub fn import_wallet(&self, json: &[u8], password: &str) -> Result<Address, Error> {
-		let account = self.sstore.import_wallet(SecretVaultRef::Root, json, password)?;
+	/// Import a new wallet.
+	pub fn import_wallet(&self, json: &[u8], password: &str, gen_id: bool) -> Result<Address, Error> {
+		let account = self.sstore.import_wallet(SecretVaultRef::Root, json, password, gen_id)?;
 		if self.blacklisted_accounts.contains(&account.address) {
 			self.sstore.remove_account(&account, password)?;
 			return Err(SSError::InvalidAccount.into());
@@ -516,8 +523,8 @@ impl AccountProvider {
 	}
 
 	/// Returns each hardware account along with name and meta.
-	pub fn is_hardware_address(&self, address: Address) -> bool {
-		self.hardware_store.as_ref().and_then(|s| s.wallet_info(&address)).is_some()
+	pub fn is_hardware_address(&self, address: &Address) -> bool {
+		self.hardware_store.as_ref().and_then(|s| s.wallet_info(address)).is_some()
 	}
 
 	/// Returns each account along with name and meta.
@@ -589,7 +596,7 @@ impl AccountProvider {
 			}
 		}
 
-		if self.unlock_keep_secret && unlock != Unlock::OneTime {
+		if self.unlock_keep_secret && unlock == Unlock::Perm {
 			// verify password and get the secret
 			let secret = self.sstore.raw_secret(&account, &password)?;
 			self.unlocked_secrets.write().insert(account.clone(), secret);
@@ -639,11 +646,19 @@ impl AccountProvider {
 	}
 
 	/// Checks if given account is unlocked
-	pub fn is_unlocked(&self, address: Address) -> bool {
+	pub fn is_unlocked(&self, address: &Address) -> bool {
 		let unlocked = self.unlocked.read();
 		let unlocked_secrets = self.unlocked_secrets.read();
-		self.sstore.account_ref(&address)
+		self.sstore.account_ref(address)
 			.map(|r| unlocked.get(&r).is_some() || unlocked_secrets.get(&r).is_some())
+			.unwrap_or(false)
+	}
+
+	/// Checks if given account is unlocked permanently
+	pub fn is_unlocked_permanently(&self, address: &Address) -> bool {
+		let unlocked = self.unlocked.read();
+		self.sstore.account_ref(address)
+			.map(|r| unlocked.get(&r).map_or(false, |account| account.unlock == Unlock::Perm))
 			.unwrap_or(false)
 	}
 

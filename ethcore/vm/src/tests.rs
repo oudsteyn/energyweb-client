@@ -65,6 +65,7 @@ pub struct FakeExt {
 	pub schedule: Schedule,
 	pub balances: HashMap<Address, U256>,
 	pub tracing: bool,
+	pub is_static: bool,
 }
 
 // similar to the normal `finalize` function, but ignoring NeedsReturn.
@@ -77,14 +78,22 @@ pub fn test_finalize(res: Result<GasLeft>) -> Result<U256> {
 }
 
 impl FakeExt {
+	/// New fake externalities
 	pub fn new() -> Self {
 		FakeExt::default()
 	}
 
+	/// New fake externalities with byzantium schedule rules
 	pub fn new_byzantium() -> Self {
 		let mut ext = FakeExt::default();
 		ext.schedule = Schedule::new_byzantium();
 		ext
+	}
+
+	/// Alter fake externalities to allow wasm
+	pub fn with_wasm(mut self) -> Self {
+		self.schedule.wasm = Some(Default::default());
+		self
 	}
 }
 
@@ -192,7 +201,7 @@ impl Ext for FakeExt {
 	}
 
 	fn is_static(&self) -> bool {
-		false
+		self.is_static
 	}
 
 	fn inc_sstore_clears(&mut self) {

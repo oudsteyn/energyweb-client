@@ -25,10 +25,11 @@ use cli::{Args, ArgsError};
 use hash::keccak;
 use bigint::prelude::U256;
 use bigint::hash::H256;
-use util::{version_data, Address};
+use util::Address;
+use parity_version::{version_data, version};
 use bytes::Bytes;
 use ansi_term::Colour;
-use ethsync::{NetworkConfiguration, is_valid_node_url};
+use ethsync::{NetworkConfiguration, validate_node_url, self};
 use ethcore::ethstore::ethkey::{Secret, Public};
 use ethcore::client::{VMType};
 use ethcore::miner::{MinerOptions, Banning, StratumOptions};
@@ -38,14 +39,15 @@ use rpc::{IpcConfiguration, HttpConfiguration, WsConfiguration, UiConfiguration}
 use rpc_apis::ApiSet;
 use parity_rpc::NetworkSettings;
 use cache::CacheConfig;
-use helpers::{to_duration, to_mode, to_block_id, to_u256, to_pending_set, to_price, replace_home, replace_home_and_local,
-geth_ipc_path, parity_ipc_path, to_bootnodes, to_addresses, to_address, to_gas_limit, to_queue_strategy};
+use helpers::{to_duration, to_mode, to_block_id, to_u256, to_pending_set, to_price, geth_ipc_path, parity_ipc_path,
+to_bootnodes, to_addresses, to_address, to_gas_limit, to_queue_strategy};
+use dir::helpers::{replace_home, replace_home_and_local};
 use params::{ResealPolicy, AccountsConfig, GasPricerConfig, MinerExtras, SpecType};
 use ethcore_logger::Config as LogConfig;
 use dir::{self, Directories, default_hypervisor_path, default_local_path, default_data_path};
 use dapps::Configuration as DappsConfiguration;
 use ipfs::Configuration as IpfsConfiguration;
-use secretstore::{Configuration as SecretStoreConfiguration, NodeSecretKey};
+use secretstore::{NodeSecretKey, Configuration as SecretStoreConfiguration, ContractAddress as SecretStoreContractAddress};
 use updater::{UpdatePolicy, UpdateFilter, ReleaseTrack};
 use run::RunCmd;
 use blockchain::{BlockchainCmd, ImportBlockchain, ExportBlockchain, KillBlockchain, ExportState, DataFormat};
@@ -143,7 +145,7 @@ impl Configuration {
 			if self.args.cmd_signer_new_token {
 				Cmd::SignerToken(ws_conf, ui_conf, logger_config.clone())
 			} else if self.args.cmd_signer_sign {
-				let pwfile = self.args.arg_signer_sign_password.map(|pwfile| {
+				let pwfile = self.args.arg_password.first().map(|pwfile| {
 					PathBuf::from(pwfile)
 				});
 				Cmd::SignerSign {
@@ -180,7 +182,7 @@ impl Configuration {
 					iterations: self.args.arg_keys_iterations,
 					path: dirs.keys,
 					spec: spec,
-					password_file: self.args.arg_account_new_password.clone(),
+					password_file: self.args.arg_password.first().map(|x| x.to_owned()),
 				};
 				AccountCmd::New(new_acc)
 			} else if self.args.cmd_account_list {
@@ -215,7 +217,7 @@ impl Configuration {
 				path: dirs.keys,
 				spec: spec,
 				wallet_path: self.args.arg_wallet_import_path.unwrap().clone(),
-				password_file: self.args.arg_wallet_import_password,
+				password_file: self.args.arg_password.first().map(|x| x.to_owned()),
 			};
 			Cmd::ImportPresaleWallet(presale_cmd)
 		} else if self.args.cmd_import {
@@ -337,6 +339,7 @@ impl Configuration {
 				daemon: daemon,
 				logger_config: logger_config.clone(),
 				miner_options: self.miner_options()?,
+				gas_price_percentile: self.args.arg_gas_price_percentile,
 				ntp_servers: self.ntp_servers(),
 				ws_conf: ws_conf,
 				http_conf: http_conf,
@@ -484,6 +487,7 @@ impl Configuration {
 	fn accounts_config(&self) -> Result<AccountsConfig, String> {
 		let cfg = AccountsConfig {
 			iterations: self.args.arg_keys_iterations,
+			refresh_time: self.args.arg_accounts_refresh,
 			testnet: self.args.flag_testnet,
 			password_files: self.args.arg_password.clone(),
 			unlocked_accounts: to_addresses(&self.args.arg_unlock)?,
@@ -543,6 +547,7 @@ impl Configuration {
 				None => Banning::Disabled,
 			},
 			refuse_service_transactions: self.args.flag_refuse_service_transactions,
+			infinite_pending_block: self.args.flag_infinite_pending_block,
 		};
 
 		Ok(options)
@@ -566,7 +571,7 @@ impl Configuration {
 	}
 
 	fn dapps_config(&self) -> DappsConfiguration {
-		let dev_ui = if self.args.flag_ui_no_validation { vec![("localhost".to_owned(), 3000)] } else { vec![] };
+		let dev_ui = if self.args.flag_ui_no_validation { vec![("127.0.0.1".to_owned(), 3000)] } else { vec![] };
 		let ui_port = self.ui_port();
 
 		DappsConfiguration {
@@ -581,7 +586,12 @@ impl Configuration {
 				let mut extra_embed = dev_ui.clone();
 				match self.ui_hosts() {
 					// In case host validation is disabled allow all frame ancestors
-					None => extra_embed.push(("*".to_owned(), ui_port)),
+					None => {
+						// NOTE Chrome does not seem to support "*:<port>"
+						// we use `http(s)://*:<port>` instead.
+						extra_embed.push(("http://*".to_owned(), ui_port));
+						extra_embed.push(("https://*".to_owned(), ui_port));
+					},
 					Some(hosts) => extra_embed.extend(hosts.into_iter().filter_map(|host| {
 						let mut it = host.split(":");
 						let host = it.next();
@@ -605,6 +615,7 @@ impl Configuration {
 			enabled: self.secretstore_enabled(),
 			http_enabled: self.secretstore_http_enabled(),
 			acl_check_enabled: self.secretstore_acl_check_enabled(),
+			service_contract_address: self.secretstore_service_contract_address()?,
 			self_secret: self.secretstore_self_secret()?,
 			nodes: self.secretstore_nodes()?,
 			interface: self.secretstore_interface(),
@@ -651,6 +662,8 @@ impl Configuration {
 			return Ok(GasPricerConfig::Fixed(to_u256(dec)?));
 		} else if let Some(dec) = self.args.arg_min_gas_price {
 			return Ok(GasPricerConfig::Fixed(U256::from(dec)));
+		} else if self.chain()? != SpecType::Foundation {
+			return Ok(GasPricerConfig::Fixed(U256::zero()));
 		}
 
 		let usd_per_tx = to_price(&self.args.arg_usd_per_tx)?;
@@ -695,9 +708,15 @@ impl Configuration {
 				let mut node_file = File::open(path).map_err(|e| format!("Error opening reserved nodes file: {}", e))?;
 				node_file.read_to_string(&mut buffer).map_err(|_| "Error reading reserved node file")?;
 				let lines = buffer.lines().map(|s| s.trim().to_owned()).filter(|s| !s.is_empty() && !s.starts_with("#")).collect::<Vec<_>>();
-				if let Some(invalid) = lines.iter().find(|s| !is_valid_node_url(s)) {
-					return Err(format!("Invalid node address format given for a boot node: {}", invalid));
+
+				for line in &lines {
+					match validate_node_url(line).map(Into::into) {
+						None => continue,
+						Some(ethsync::ErrorKind::AddressResolve(_)) => return Err(format!("Failed to resolve hostname of a boot node: {}", line)),
+						Some(_) => return Err(format!("Invalid node address format given for a boot node: {}", line)),
+					}
 				}
+
 				Ok(lines)
 			},
 			None => Ok(Vec::new())
@@ -742,6 +761,7 @@ impl Configuration {
 		ret.config_path = Some(net_path.to_str().unwrap().to_owned());
 		ret.reserved_nodes = self.init_reserved_nodes()?;
 		ret.allow_non_reserved = !self.args.flag_reserved_only;
+		ret.client_version = version();
 		Ok(ret)
 	}
 
@@ -763,13 +783,19 @@ impl Configuration {
 		apis.join(",")
 	}
 
-	fn cors(cors: Option<&String>) -> Option<Vec<String>> {
-		cors.map(|ref c| c.split(',').map(Into::into).collect())
+	fn cors(cors: &str) -> Option<Vec<String>> {
+		match cors {
+			"none" => return Some(Vec::new()),
+			"*" | "all" | "any" => return None,
+			_ => {},
+		}
+
+		Some(cors.split(',').map(Into::into).collect())
 	}
 
 	fn rpc_cors(&self) -> Option<Vec<String>> {
-		let cors = self.args.arg_jsonrpc_cors.as_ref().or(self.args.arg_rpccorsdomain.as_ref());
-		Self::cors(cors)
+		let cors = self.args.arg_rpccorsdomain.clone().unwrap_or_else(|| self.args.arg_jsonrpc_cors.to_owned());
+		Self::cors(&cors)
 	}
 
 	fn ipfs_cors(&self) -> Option<Vec<String>> {
@@ -1067,6 +1093,14 @@ impl Configuration {
 		!self.args.flag_no_secretstore_acl_check
 	}
 
+	fn secretstore_service_contract_address(&self) -> Result<Option<SecretStoreContractAddress>, String> {
+		Ok(match self.args.arg_secretstore_contract.as_ref() {
+			"none" => None,
+			"registry" => Some(SecretStoreContractAddress::Registry),
+			a => Some(SecretStoreContractAddress::Address(a.parse().map_err(|e| format!("{}", e))?)),
+		})
+	}
+
 	fn ui_enabled(&self) -> bool {
 		if self.args.flag_force_ui {
 			return true;
@@ -1329,6 +1363,7 @@ mod tests {
 			daemon: None,
 			logger_config: Default::default(),
 			miner_options: Default::default(),
+			gas_price_percentile: 50,
 			ntp_servers: vec![
 				"0.parity.pool.ntp.org:123".into(),
 				"1.parity.pool.ntp.org:123".into(),
@@ -1374,6 +1409,7 @@ mod tests {
 		};
 		expected.secretstore_conf.enabled = cfg!(feature = "secretstore");
 		expected.secretstore_conf.http_enabled = cfg!(feature = "secretstore");
+		assert_eq!(conf.into_command().unwrap().cmd, Cmd::Run(expected));
 	}
 
 	#[test]
@@ -1445,7 +1481,7 @@ mod tests {
 			assert_eq!(net.rpc_enabled, true);
 			assert_eq!(net.rpc_interface, "0.0.0.0".to_owned());
 			assert_eq!(net.rpc_port, 8000);
-			assert_eq!(conf.rpc_cors(), Some(vec!["*".to_owned()]));
+			assert_eq!(conf.rpc_cors(), None);
 			assert_eq!(conf.rpc_apis(), "web3,eth".to_owned());
 		}
 
@@ -1512,8 +1548,8 @@ mod tests {
 		let conf2 = parse(&["parity", "--ipfs-api-cors", "http://parity.io,http://something.io"]);
 
 		// then
-		assert_eq!(conf0.ipfs_cors(), None);
-		assert_eq!(conf1.ipfs_cors(), Some(vec!["*".into()]));
+		assert_eq!(conf0.ipfs_cors(), Some(vec![]));
+		assert_eq!(conf1.ipfs_cors(), None);
 		assert_eq!(conf2.ipfs_cors(), Some(vec!["http://parity.io".into(),"http://something.io".into()]));
 	}
 
@@ -1567,7 +1603,7 @@ mod tests {
 			port: 8180,
 			hosts: Some(vec![]),
 		});
-		assert_eq!(conf1.dapps_config().extra_embed_on, vec![("localhost".to_owned(), 3000)]);
+		assert_eq!(conf1.dapps_config().extra_embed_on, vec![("127.0.0.1".to_owned(), 3000)]);
 		assert_eq!(conf1.ws_config().unwrap().origins, None);
 		assert_eq!(conf2.directories().signer, "signer".to_owned());
 		assert_eq!(conf2.ui_config(), UiConfiguration {
@@ -1838,7 +1874,7 @@ mod tests {
 
 		let base_path = ::dir::default_data_path();
 		let local_path = ::dir::default_local_path();
-		assert_eq!(std.directories().cache, ::helpers::replace_home_and_local(&base_path, &local_path, ::dir::CACHE_PATH));
+		assert_eq!(std.directories().cache, dir::helpers::replace_home_and_local(&base_path, &local_path, ::dir::CACHE_PATH));
 		assert_eq!(base.directories().cache, "/test/cache");
 	}
 }

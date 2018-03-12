@@ -21,9 +21,9 @@ use block::{OpenBlock, SealedBlock, ClosedBlock};
 use blockchain::TreeRoute;
 use encoded;
 use vm::LastHashes;
-use error::{ImportResult, CallError, Error as EthcoreError};
-use error::{TransactionImportResult, BlockImportError};
-use evm::{Factory as EvmFactory, Schedule};
+use error::{ImportResult, CallError, Error as EthcoreError, TransactionImportResult, BlockImportError};
+use evm::Schedule;
+use factory::VmFactory;
 use executive::Executed;
 use filter::Filter;
 use header::{BlockNumber};
@@ -298,7 +298,7 @@ pub trait MiningBlockChainClient: BlockChainClient {
 	fn reopen_block(&self, block: ClosedBlock) -> OpenBlock;
 
 	/// Returns EvmFactory.
-	fn vm_factory(&self) -> &EvmFactory;
+	fn vm_factory(&self) -> &VmFactory;
 
 	/// Broadcast a block proposal.
 	fn broadcast_proposal_block(&self, block: SealedBlock);
@@ -308,6 +308,9 @@ pub trait MiningBlockChainClient: BlockChainClient {
 
 	/// Returns latest schedule.
 	fn latest_schedule(&self) -> Schedule;
+
+	/// Returns base of this trait
+	fn as_block_chain_client(&self) -> &BlockChainClient;
 }
 
 /// Client facilities used by internally sealing Engines.

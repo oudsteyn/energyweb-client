@@ -80,6 +80,11 @@ pub fn new_musicoin<'a, T: Into<SpecParams<'a>>>(params: T) -> Spec {
 	load(params.into(), include_bytes!("../../res/ethereum/musicoin.json"))
 }
 
+/// Create a new Ellaism mainnet chain spec.
+pub fn new_ellaism<'a, T: Into<SpecParams<'a>>>(params: T) -> Spec {
+	load(params.into(), include_bytes!("../../res/ethereum/ellaism.json"))
+}
+
 /// Create a new Kovan testnet chain spec.
 pub fn new_kovan<'a, T: Into<SpecParams<'a>>>(params: T) -> Spec {
 	load(params.into(), include_bytes!("../../res/ethereum/kovan.json"))
@@ -140,6 +145,9 @@ pub fn new_constantinople_test_machine() -> EthereumMachine { load_machine(inclu
 
 /// Create a new Musicoin-MCIP3-era spec.
 pub fn new_mcip3_test_machine() -> EthereumMachine { load_machine(include_bytes!("../../res/ethereum/mcip3_test.json")) }
+
+/// Create new Kovan spec with wasm activated at certain block
+pub fn new_kovan_wasm_test_machine() -> EthereumMachine { load_machine(include_bytes!("../../res/ethereum/kovan_wasm_test.json")) }
 
 #[cfg(test)]
 mod tests {

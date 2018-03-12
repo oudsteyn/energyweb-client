@@ -17,7 +17,8 @@
 use std::{str, fs, fmt};
 use std::time::Duration;
 use bigint::prelude::U256;
-use util::{Address, version_data};
+use util::Address;
+use parity_version::version_data;
 use journaldb::Algorithm;
 use ethcore::spec::{Spec, SpecParams};
 use ethcore::ethereum;
@@ -31,12 +32,13 @@ pub enum SpecType {
 	Foundation,
 	Morden,
 	Ropsten,
-        Tobalaba,
+	Tobalaba,
 	Kovan,
 	Olympic,
 	Classic,
 	Expanse,
 	Musicoin,
+	Ellaism,
 	Dev,
 	Custom(String),
 }
@@ -57,10 +59,11 @@ impl str::FromStr for SpecType {
 			"morden" | "classic-testnet" => SpecType::Morden,
 			"ropsten" => SpecType::Ropsten,
 			"kovan" | "testnet" => SpecType::Kovan,
-                        "tobalaba" => SpecType::Tobalaba,
+			"tobalaba" => SpecType::Tobalaba,
 			"olympic" => SpecType::Olympic,
 			"expanse" => SpecType::Expanse,
 			"musicoin" => SpecType::Musicoin,
+			"ellaism" => SpecType::Ellaism,
 			"dev" => SpecType::Dev,
 			other => SpecType::Custom(other.into()),
 		};
@@ -78,8 +81,9 @@ impl fmt::Display for SpecType {
 			SpecType::Classic => "classic",
 			SpecType::Expanse => "expanse",
 			SpecType::Musicoin => "musicoin",
+			SpecType::Ellaism => "ellaism",
 			SpecType::Kovan => "kovan",
-                        SpecType::Tobalaba => "tobalaba",
+			SpecType::Tobalaba => "tobalaba",
 			SpecType::Dev => "dev",
 			SpecType::Custom(ref custom) => custom,
 		})
@@ -97,8 +101,9 @@ impl SpecType {
 			SpecType::Classic => Ok(ethereum::new_classic(params)),
 			SpecType::Expanse => Ok(ethereum::new_expanse(params)),
 			SpecType::Musicoin => Ok(ethereum::new_musicoin(params)),
+			SpecType::Ellaism => Ok(ethereum::new_ellaism(params)),
 			SpecType::Kovan => Ok(ethereum::new_kovan(params)),
-                        SpecType::Tobalaba => Ok(ethereum::new_tobalaba(params)),
+			SpecType::Tobalaba => Ok(ethereum::new_tobalaba(params)),
 			SpecType::Dev => Ok(Spec::new_instant()),
 			SpecType::Custom(ref filename) => {
 				let file = fs::File::open(filename).map_err(|e| format!("Could not load specification file at {}: {}", filename, e))?;
@@ -188,6 +193,7 @@ impl str::FromStr for ResealPolicy {
 #[derive(Debug, PartialEq)]
 pub struct AccountsConfig {
 	pub iterations: u32,
+	pub refresh_time: u64,
 	pub testnet: bool,
 	pub password_files: Vec<String>,
 	pub unlocked_accounts: Vec<Address>,
@@ -199,6 +205,7 @@ impl Default for AccountsConfig {
 	fn default() -> Self {
 		AccountsConfig {
 			iterations: 10240,
+			refresh_time: 5,
 			testnet: false,
 			password_files: Vec::new(),
 			unlocked_accounts: Vec::new(),
@@ -342,7 +349,6 @@ mod tests {
 		assert_eq!(SpecType::Foundation, "foundation".parse().unwrap());
 		assert_eq!(SpecType::Kovan, "testnet".parse().unwrap());
 		assert_eq!(SpecType::Kovan, "kovan".parse().unwrap());
-                //assert_eq!(SpecType::Tobalaba, "tobalaba".parse().unwrap());
 		assert_eq!(SpecType::Morden, "morden".parse().unwrap());
 		assert_eq!(SpecType::Ropsten, "ropsten".parse().unwrap());
 		assert_eq!(SpecType::Olympic, "olympic".parse().unwrap());
@@ -365,7 +371,6 @@ mod tests {
 		assert_eq!(format!("{}", SpecType::Expanse), "expanse");
 		assert_eq!(format!("{}", SpecType::Musicoin), "musicoin");
 		assert_eq!(format!("{}", SpecType::Kovan), "kovan");
-                //assert_eq!(format!("{}", SpecType::Tobalaba), "tobalaba");
 		assert_eq!(format!("{}", SpecType::Dev), "dev");
 		assert_eq!(format!("{}", SpecType::Custom("foo/bar".into())), "foo/bar");
 	}

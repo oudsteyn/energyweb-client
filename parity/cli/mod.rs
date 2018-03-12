@@ -24,6 +24,7 @@ usage! {
 		// Subcommands must start with cmd_ and have '_' in place of '-'
 		// Sub-subcommands must start with the name of the subcommand
 		// Arguments must start with arg_
+		// Flags must start with flag_
 
 		CMD cmd_ui {
 			"Manage ui",
@@ -53,10 +54,6 @@ usage! {
 
 			CMD cmd_account_new {
 				"Create a new acount",
-
-				ARG arg_account_new_password: (Option<String>) = None,
-				"--password=[FILE]",
-				"Path to the password file",
 			}
 
 			CMD cmd_account_list {
@@ -80,10 +77,6 @@ usage! {
 			CMD cmd_wallet_import
 			{
 				"Import wallet",
-
-				ARG arg_wallet_import_password: (Option<String>) = None,
-				"--password=[FILE]",
-				"Path to the password file",
 
 				ARG arg_wallet_import_path: (Option<String>) = None,
 				"<PATH>",
@@ -179,10 +172,6 @@ usage! {
 			{
 				"Sign",
 
-				ARG arg_signer_sign_password: (Option<String>) = None,
-				"--password=[FILE]",
-				"Path to the password file",
-
 				ARG arg_signer_sign_id: (Option<usize>) = None,
 				"[ID]",
 				"ID",
@@ -244,7 +233,7 @@ usage! {
 		}
 	}
 	{
-		// Flags and arguments
+		// Global flags and arguments
 		["Operating Options"]
 			FLAG flag_public_node: (bool) = false, or |c: &Config| otry!(c.parity).public_node.clone(),
 			"--public-node",
@@ -268,12 +257,7 @@ usage! {
 
 			ARG arg_mode: (String) = "last", or |c: &Config| otry!(c.parity).mode.clone(),
 			"--mode=[MODE]",
-			"Set the operating mode. MODE can be one of:
-			last - Uses the last-used mode, active if none.
-			active - Parity continuously syncs the chain.
-			passive - Parity syncs initially, then sleeps and wakes regularly to resync.
-			dark - Parity syncs only when the RPC is active.
-			offline - Parity doesn't sync.",
+			"Set the operating mode. MODE can be one of: last - Uses the last-used mode, active if none; active - Parity continuously syncs the chain; passive - Parity syncs initially, then sleeps and wakes regularly to resync; dark - Parity syncs only when the RPC is active; offline - Parity doesn't sync.",
 
 			ARG arg_mode_timeout: (u64) = 300u64, or |c: &Config| otry!(c.parity).mode_timeout.clone(),
 			"--mode-timeout=[SECS]",
@@ -285,23 +269,15 @@ usage! {
 
 			ARG arg_auto_update: (String) = "critical", or |c: &Config| otry!(c.parity).auto_update.clone(),
 			"--auto-update=[SET]",
-			"Set a releases set to automatically update and install.
-			all - All updates in the our release track.
-			critical - Only consensus/security updates.
-			none - No updates will be auto-installed.",
+			"Set a releases set to automatically update and install. SET can be one of: all - All updates in the our release track; critical - Only consensus/security updates; none - No updates will be auto-installed.",
 
 			ARG arg_release_track: (String) = "current", or |c: &Config| otry!(c.parity).release_track.clone(),
 			"--release-track=[TRACK]",
-			"Set which release track we should use for updates.
-			stable - Stable releases.
-			beta - Beta releases.
-			nightly - Nightly releases (unstable).
-			testing - Testing releases (do not use).
-			current - Whatever track this executable was released on",
+			"Set which release track we should use for updates. TRACK can be one of: stable - Stable releases; beta - Beta releases; nightly - Nightly releases (unstable); testing - Testing releases (do not use); current - Whatever track this executable was released on.",
 
 			ARG arg_chain: (String) = "tobalaba", or |c: &Config| otry!(c.parity).chain.clone(),
 			"--chain=[CHAIN]",
-			"Specify the blockchain type. CHAIN may be either a JSON chain specification file or olympic, frontier, homestead, mainnet, morden, ropsten, classic, expanse, musicoin, testnet, kovan or dev.",
+			"Specify the blockchain type. CHAIN may be either a JSON chain specification file or olympic, frontier, homestead, mainnet, morden, ropsten, classic, expanse, musicoin, ellaism, testnet, kovan or dev.",
 
 			ARG arg_keys_path: (String) = "$BASE/keys", or |c: &Config| otry!(c.parity).keys_path.clone(),
 			"--keys-path=[PATH]",
@@ -322,8 +298,7 @@ usage! {
 		["Convenience options"]
 			FLAG flag_unsafe_expose: (bool) = false, or |c: &Config| otry!(c.misc).unsafe_expose,
 			"--unsafe-expose",
-			"All servers will listen on external interfaces and will be remotely accessible. It's equivalent with setting the following: --{{ws,jsonrpc,ui,ipfs,secret_store,stratum}}-interface=all --*-hosts=all
-		This option is UNSAFE and should be used with great care!",
+			"All servers will listen on external interfaces and will be remotely accessible. It's equivalent with setting the following: --{{ws,jsonrpc,ui,ipfs,secret_store,stratum}}-interface=all --*-hosts=all    This option is UNSAFE and should be used with great care!",
 
 			ARG arg_config: (String) = "$BASE/config.toml", or |_| None,
 			"-c, --config=[CONFIG]",
@@ -345,6 +320,10 @@ usage! {
 			ARG arg_keys_iterations: (u32) = 10240u32, or |c: &Config| otry!(c.account).keys_iterations.clone(),
 			"--keys-iterations=[NUM]",
 			"Specify the number of iterations to use when deriving key from the password (bigger is more secure)",
+
+			ARG arg_accounts_refresh: (u64) = 5u64, or |c: &Config| otry!(c.account).refresh_time.clone(),
+			"--accounts-refresh=[TIME]",
+			"Specify the cache time of accounts read from disk. If you manage thousands of accounts set this to 0 to disable refresh.",
 
 			ARG arg_unlock: (Option<String>) = None, or |c: &Config| otry!(c.account).unlock.as_ref().map(|vec| vec.join(",")),
 			"--unlock=[ACCOUNTS]",
@@ -462,7 +441,7 @@ usage! {
 			"--jsonrpc-interface=[IP]",
 			"Specify the hostname portion of the JSONRPC API server, IP should be an interface's IP address, or all (all interfaces) or local.",
 
-			ARG arg_jsonrpc_apis: (String) = "web3,eth,pubsub,net,parity,parity_pubsub,traces,rpc,secretstore,shh,shh_pubsub", or |c: &Config| otry!(c.rpc).apis.as_ref().map(|vec| vec.join(",")),
+			ARG arg_jsonrpc_apis: (String) = "web3,eth,pubsub,net,parity,parity_pubsub,traces,rpc,shh,shh_pubsub", or |c: &Config| otry!(c.rpc).apis.as_ref().map(|vec| vec.join(",")),
 			"--jsonrpc-apis=[APIS]",
 			"Specify the APIs available through the JSONRPC interface. APIS is a comma-delimited list of API name. Possible name are all, safe, web3, eth, net, personal, parity, parity_set, traces, rpc, parity_accounts. You can also disable a specific API by putting '-' in the front: all,-personal.",
 
@@ -470,13 +449,13 @@ usage! {
 			"--jsonrpc-hosts=[HOSTS]",
 			"List of allowed Host header values. This option will validate the Host header sent by the browser, it is additional security against some attack vectors. Special options: \"all\", \"none\",.",
 
-			ARG arg_jsonrpc_threads: (usize) = 0usize, or |c: &Config| otry!(c.rpc).processing_threads,
+			ARG arg_jsonrpc_threads: (usize) = 4usize, or |c: &Config| otry!(c.rpc).processing_threads,
 			"--jsonrpc-threads=[THREADS]",
 			"Turn on additional processing threads in all RPC servers. Setting this to non-zero value allows parallel cpu-heavy queries execution.",
 
-			ARG arg_jsonrpc_cors: (Option<String>) = None, or |c: &Config| otry!(c.rpc).cors.clone(),
+			ARG arg_jsonrpc_cors: (String) = "none", or |c: &Config| otry!(c.rpc).cors.as_ref().map(|vec| vec.join(",")),
 			"--jsonrpc-cors=[URL]",
-			"Specify CORS header for JSON-RPC API responses.",
+			"Specify CORS header for JSON-RPC API responses. Special options: \"all\", \"none\".",
 
 			ARG arg_jsonrpc_server_threads: (Option<usize>) = None, or |c: &Config| otry!(c.rpc).server_threads,
 			"--jsonrpc-server-threads=[NUM]",
@@ -495,7 +474,7 @@ usage! {
 			"--ws-interface=[IP]",
 			"Specify the hostname portion of the WebSockets server, IP should be an interface's IP address, or all (all interfaces) or local.",
 
-			ARG arg_ws_apis: (String) = "web3,eth,pubsub,net,parity,parity_pubsub,traces,rpc,secretstore,shh,shh_pubsub", or |c: &Config| otry!(c.websockets).apis.as_ref().map(|vec| vec.join(",")),
+			ARG arg_ws_apis: (String) = "web3,eth,pubsub,net,parity,parity_pubsub,traces,rpc,shh,shh_pubsub", or |c: &Config| otry!(c.websockets).apis.as_ref().map(|vec| vec.join(",")),
 			"--ws-apis=[APIS]",
 			"Specify the APIs available through the WebSockets interface. APIS is a comma-delimited list of API name. Possible name are web3, eth, pubsub, net, personal, parity, parity_set, traces, rpc, parity_accounts..",
 
@@ -505,7 +484,7 @@ usage! {
 
 			ARG arg_ws_hosts: (String) = "none", or |c: &Config| otry!(c.websockets).hosts.as_ref().map(|vec| vec.join(",")),
 			"--ws-hosts=[HOSTS]",
-			"List of allowed Host header values. This option will validate the Host header sent by the browser, it is additional security against some attack vectors. Special options: \"all\", \"none\",.",
+			"List of allowed Host header values. This option will validate the Host header sent by the browser, it is additional security against some attack vectors. Special options: \"all\", \"none\".",
 
 		["API and console options – IPC"]
 			FLAG flag_no_ipc: (bool) = false, or |c: &Config| otry!(c.ipc).disable.clone(),
@@ -516,7 +495,7 @@ usage! {
 			"--ipc-path=[PATH]",
 			"Specify custom path for JSON-RPC over IPC service.",
 
-			ARG arg_ipc_apis: (String) = "web3,eth,pubsub,net,parity,parity_pubsub,parity_accounts,traces,rpc,secretstore,shh,shh_pubsub", or |c: &Config| otry!(c.ipc).apis.as_ref().map(|vec| vec.join(",")),
+			ARG arg_ipc_apis: (String) = "web3,eth,pubsub,net,parity,parity_pubsub,parity_accounts,traces,rpc,shh,shh_pubsub", or |c: &Config| otry!(c.ipc).apis.as_ref().map(|vec| vec.join(",")),
 			"--ipc-apis=[APIS]",
 			"Specify custom API set available via JSON-RPC over IPC.",
 
@@ -546,9 +525,9 @@ usage! {
 			"--ipfs-api-hosts=[HOSTS]",
 			"List of allowed Host header values. This option will validate the Host header sent by the browser, it is additional security against some attack vectors. Special options: \"all\", \"none\".",
 
-			ARG arg_ipfs_api_cors: (Option<String>) = None, or |c: &Config| otry!(c.ipfs).cors.clone(),
+			ARG arg_ipfs_api_cors: (String) = "none", or |c: &Config| otry!(c.ipfs).cors.as_ref().map(|vec| vec.join(",")),
 			"--ipfs-api-cors=[URL]",
-			"Specify CORS header for IPFS API responses.",
+			"Specify CORS header for IPFS API responses. Special options: \"all\", \"none\".",
 
 		["Secret store options"]
 			FLAG flag_no_secretstore: (bool) = false, or |c: &Config| otry!(c.secretstore).disable.clone(),
@@ -562,6 +541,10 @@ usage! {
  			FLAG flag_no_secretstore_acl_check: (bool) = false, or |c: &Config| otry!(c.secretstore).disable_acl_check.clone(),
 			"--no-acl-check",
 			"Disable ACL check (useful for test environments).",
+
+			ARG arg_secretstore_contract: (String) = "none", or |c: &Config| otry!(c.secretstore).service_contract.clone(),
+			"--secretstore-contract=[SOURCE]",
+			"Secret Store Service contract address source: none, registry (contract address is read from registry) or address.",
 
 			ARG arg_secretstore_nodes: (String) = "", or |c: &Config| otry!(c.secretstore).nodes.as_ref().map(|vec| vec.join(",")),
 			"--secretstore-nodes=[NODES]",
@@ -585,7 +568,7 @@ usage! {
 
 			ARG arg_secretstore_path: (String) = "$BASE/secretstore", or |c: &Config| otry!(c.secretstore).path.clone(),
 			"--secretstore-path=[PATH]",
-			"Specify directory where Secret Store should save its data..",
+			"Specify directory where Secret Store should save its data.",
 
 			ARG arg_secretstore_secret: (Option<String>) = None, or |c: &Config| otry!(c.secretstore).self_secret.clone(),
 			"--secretstore-secret=[SECRET]",
@@ -610,7 +593,11 @@ usage! {
 
 			FLAG flag_refuse_service_transactions: (bool) = false, or |c: &Config| otry!(c.mining).refuse_service_transactions.clone(),
 			"--refuse-service-transactions",
-			"Always refuse service transactions..",
+			"Always refuse service transactions.",
+
+			FLAG flag_infinite_pending_block: (bool) = false, or |c: &Config| otry!(c.mining).infinite_pending_block.clone(),
+			"--infinite-pending-block",
+			"Pending block will be created with maximal possible gas limit and will execute all transactions in the queue. Note that such block is invalid and should never be attempted to be mined.",
 
 			FLAG flag_no_persistent_txqueue: (bool) = false, or |c: &Config| otry!(c.parity).no_persistent_txqueue,
 			"--no-persistent-txqueue",
@@ -670,7 +657,7 @@ usage! {
 
 			ARG arg_tx_queue_gas: (String) = "off", or |c: &Config| otry!(c.mining).tx_queue_gas.clone(),
 			"--tx-queue-gas=[LIMIT]",
-			"Maximum amount of total gas for external transactions in the queue. LIMIT can be either an amount of gas or 'auto' or 'off'. 'auto' sets the limit to be 20x the current block gas limit..",
+			"Maximum amount of total gas for external transactions in the queue. LIMIT can be either an amount of gas or 'auto' or 'off'. 'auto' sets the limit to be 20x the current block gas limit.",
 
 			ARG arg_tx_queue_strategy: (String) = "gas_price", or |c: &Config| otry!(c.mining).tx_queue_strategy.clone(),
 			"--tx-queue-strategy=[S]",
@@ -694,7 +681,11 @@ usage! {
 
 			ARG arg_min_gas_price: (Option<u64>) = None, or |c: &Config| otry!(c.mining).min_gas_price.clone(),
 			"--min-gas-price=[STRING]",
-			"Minimum amount of Wei per GAS to be paid for a transaction to be accepted for mining. Overrides --basic-tx-usd.",
+			"Minimum amount of Wei per GAS to be paid for a transaction to be accepted for mining. Overrides --usd-per-tx.",
+
+			ARG arg_gas_price_percentile: (usize) = 50usize, or |c: &Config| otry!(c.mining).gas_price_percentile,
+			"--gas-price-percentile=[PCT]",
+			"Set PCT percentile gas price value from last 100 blocks as default gas price when sending transactions.",
 
 			ARG arg_author: (Option<String>) = None, or |c: &Config| otry!(c.mining).author.clone(),
 			"--author=[ADDRESS]",
@@ -773,13 +764,13 @@ usage! {
 
 			ARG arg_pruning_history: (u64) = 64u64, or |c: &Config| otry!(c.footprint).pruning_history.clone(),
 			"--pruning-history=[NUM]",
-			"Set a minimum number of recent states to keep when pruning is active..",
+			"Set a minimum number of recent states to keep when pruning is active.",
 
 			ARG arg_pruning_memory: (usize) = 32usize, or |c: &Config| otry!(c.footprint).pruning_memory.clone(),
 			"--pruning-memory=[MB]",
 			"The ideal amount of memory in megabytes to use to store recent states. As many states as possible will be kept within this limit, and at least --pruning-history states will always be kept.",
 
-			ARG arg_cache_size_db: (u32) = 32u32, or |c: &Config| otry!(c.footprint).cache_size_db.clone(),
+			ARG arg_cache_size_db: (u32) = 128u32, or |c: &Config| otry!(c.footprint).cache_size_db.clone(),
 			"--cache-size-db=[MB]",
 			"Override database cache size.",
 
@@ -836,6 +827,10 @@ usage! {
 			"Target size of the whisper message pool in megabytes.",
 
 		["Legacy options"]
+			FLAG flag_warp: (bool) = false, or |_| None,
+			"--warp",
+			"Does nothing; warp sync is enabled by default.",
+
 			FLAG flag_dapps_apis_all: (bool) = false, or |_| None,
 			"--dapps-apis-all",
 			"Dapps server is merged with RPC server. Use --jsonrpc-apis.",
@@ -990,6 +985,7 @@ struct Config {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Operating {
 	mode: Option<String>,
 	mode_timeout: Option<u64>,
@@ -1009,15 +1005,18 @@ struct Operating {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Account {
 	unlock: Option<Vec<String>>,
 	password: Option<Vec<String>>,
 	keys_iterations: Option<u32>,
+	refresh_time: Option<u64>,
 	disable_hardware: Option<bool>,
 	fast_unlock: Option<bool>,
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Ui {
 	force: Option<bool>,
 	disable: Option<bool>,
@@ -1028,6 +1027,7 @@ struct Ui {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Network {
 	warp: Option<bool>,
 	port: Option<u16>,
@@ -1047,11 +1047,12 @@ struct Network {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Rpc {
 	disable: Option<bool>,
 	port: Option<u16>,
 	interface: Option<String>,
-	cors: Option<String>,
+	cors: Option<Vec<String>>,
 	apis: Option<Vec<String>>,
 	hosts: Option<Vec<String>>,
 	server_threads: Option<usize>,
@@ -1059,6 +1060,7 @@ struct Rpc {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Ws {
 	disable: Option<bool>,
 	port: Option<u16>,
@@ -1069,6 +1071,7 @@ struct Ws {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Ipc {
 	disable: Option<bool>,
 	path: Option<String>,
@@ -1076,6 +1079,7 @@ struct Ipc {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Dapps {
 	disable: Option<bool>,
 	port: Option<u16>,
@@ -1088,10 +1092,12 @@ struct Dapps {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SecretStore {
 	disable: Option<bool>,
 	disable_http: Option<bool>,
 	disable_acl_check: Option<bool>,
+	service_contract: Option<String>,
 	self_secret: Option<String>,
 	admin_public: Option<String>,
 	nodes: Option<Vec<String>>,
@@ -1103,15 +1109,17 @@ struct SecretStore {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Ipfs {
 	enable: Option<bool>,
 	port: Option<u16>,
 	interface: Option<String>,
-	cors: Option<String>,
+	cors: Option<Vec<String>>,
 	hosts: Option<Vec<String>>,
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Mining {
 	author: Option<String>,
 	engine_signer: Option<String>,
@@ -1125,6 +1133,7 @@ struct Mining {
 	tx_time_limit: Option<u64>,
 	relay_set: Option<String>,
 	min_gas_price: Option<u64>,
+	gas_price_percentile: Option<usize>,
 	usd_per_tx: Option<String>,
 	usd_per_eth: Option<String>,
 	price_update_period: Option<String>,
@@ -1140,9 +1149,11 @@ struct Mining {
 	remove_solved: Option<bool>,
 	notify_work: Option<Vec<String>>,
 	refuse_service_transactions: Option<bool>,
+	infinite_pending_block: Option<bool>,
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Stratum {
 	interface: Option<String>,
 	port: Option<u16>,
@@ -1150,6 +1161,7 @@ struct Stratum {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Footprint {
 	tracing: Option<String>,
 	pruning: Option<String>,
@@ -1168,16 +1180,19 @@ struct Footprint {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Snapshots {
 	disable_periodic: Option<bool>,
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct VM {
 	jit: Option<bool>,
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Misc {
 	ntp_servers: Option<Vec<String>>,
 	logging: Option<String>,
@@ -1188,6 +1203,7 @@ struct Misc {
 }
 
 #[derive(Default, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Whisper {
 	enabled: Option<bool>,
 	pool_size: Option<usize>,
@@ -1203,6 +1219,29 @@ mod tests {
 	use toml;
 	use clap::{ErrorKind as ClapErrorKind};
 
+	#[test]
+	fn should_accept_any_argument_order() {
+		let args = Args::parse(&["parity", "--no-warp", "account", "list"]).unwrap();
+		assert_eq!(args.flag_no_warp, true);
+
+		let args = Args::parse(&["parity", "account", "list", "--no-warp"]).unwrap();
+		assert_eq!(args.flag_no_warp, true);
+
+		let args = Args::parse(&["parity", "--chain=dev", "account", "list"]).unwrap();
+		assert_eq!(args.arg_chain, "dev");
+
+		let args = Args::parse(&["parity", "account", "list", "--chain=dev"]).unwrap();
+		assert_eq!(args.arg_chain, "dev");
+	}
+
+	#[test]
+	fn should_not_crash_on_warp() {
+		let args = Args::parse(&["parity", "--warp"]);
+		assert!(args.is_ok());
+
+		let args = Args::parse(&["parity", "account", "list", "--warp"]);
+		assert!(args.is_ok());
+	}
 
 	#[test]
 	fn should_reject_invalid_values() {
@@ -1269,12 +1308,15 @@ mod tests {
 		let args = Args::parse(&["parity", "--secretstore-nodes", "abc@127.0.0.1:3333,cde@10.10.10.10:4444"]).unwrap();
 		assert_eq!(args.arg_secretstore_nodes, "abc@127.0.0.1:3333,cde@10.10.10.10:4444");
 
-		// Arguments with a single value shouldn't accept multiple values
-		let args = Args::parse(&["parity", "--auto-update", "critical", "all"]);
-		assert!(args.is_err());
-
-		let args = Args::parse(&["parity", "--password", "~/.safe/1", "~/.safe/2"]).unwrap();
+		let args = Args::parse(&["parity", "--password", "~/.safe/1", "--password", "~/.safe/2", "--ui-port", "8123", "ui"]).unwrap();
 		assert_eq!(args.arg_password, vec!["~/.safe/1".to_owned(), "~/.safe/2".to_owned()]);
+		assert_eq!(args.arg_ui_port, 8123);
+		assert_eq!(args.cmd_ui, true);
+
+		let args = Args::parse(&["parity", "--password", "~/.safe/1,~/.safe/2", "--ui-port", "8123", "ui"]).unwrap();
+		assert_eq!(args.arg_password, vec!["~/.safe/1".to_owned(), "~/.safe/2".to_owned()]);
+		assert_eq!(args.arg_ui_port, 8123);
+		assert_eq!(args.cmd_ui, true);
 	}
 
 	#[test]
@@ -1375,9 +1417,6 @@ mod tests {
 			arg_restore_file: None,
 			arg_tools_hash_file: None,
 
-			arg_account_new_password: None,
-			arg_signer_sign_password: None,
-			arg_wallet_import_password: None,
 			arg_signer_sign_id: None,
 			arg_signer_reject_id: None,
 			arg_dapp_path: None,
@@ -1411,6 +1450,7 @@ mod tests {
 			arg_unlock: Some("0xdeadbeefcafe0000000000000000000000000000".into()),
 			arg_password: vec!["~/.safe/password.file".into()],
 			arg_keys_iterations: 10240u32,
+			arg_accounts_refresh: 5u64,
 			flag_no_hardware_wallets: false,
 			flag_fast_unlock: false,
 
@@ -1445,11 +1485,11 @@ mod tests {
 			flag_no_jsonrpc: false,
 			arg_jsonrpc_port: 8545u16,
 			arg_jsonrpc_interface: "local".into(),
-			arg_jsonrpc_cors: Some("null".into()),
+			arg_jsonrpc_cors: "null".into(),
 			arg_jsonrpc_apis: "web3,eth,net,parity,traces,rpc,secretstore".into(),
 			arg_jsonrpc_hosts: "none".into(),
 			arg_jsonrpc_server_threads: None,
-			arg_jsonrpc_threads: 0,
+			arg_jsonrpc_threads: 4,
 
 			// WS
 			flag_no_ws: false,
@@ -1471,6 +1511,7 @@ mod tests {
 			flag_no_secretstore: false,
 			flag_no_secretstore_http: false,
 			flag_no_secretstore_acl_check: false,
+			arg_secretstore_contract: "none".into(),
 			arg_secretstore_secret: None,
 			arg_secretstore_admin_public: None,
 			arg_secretstore_nodes: "".into(),
@@ -1484,7 +1525,7 @@ mod tests {
 			flag_ipfs_api: false,
 			arg_ipfs_api_port: 5001u16,
 			arg_ipfs_api_interface: "local".into(),
-			arg_ipfs_api_cors: Some("null".into()),
+			arg_ipfs_api_cors: "null".into(),
 			arg_ipfs_api_hosts: "none".into(),
 
 			// -- Sealing/Mining Options
@@ -1500,6 +1541,7 @@ mod tests {
 			arg_tx_time_limit: Some(100u64),
 			arg_relay_set: "cheap".into(),
 			arg_min_gas_price: Some(0u64),
+			arg_gas_price_percentile: 50usize,
 			arg_usd_per_tx: "0.0025".into(),
 			arg_usd_per_eth: "auto".into(),
 			arg_price_update_period: "hourly".into(),
@@ -1515,6 +1557,7 @@ mod tests {
 			flag_remove_solved: false,
 			arg_notify_work: Some("http://localhost:3001".into()),
 			flag_refuse_service_transactions: false,
+			flag_infinite_pending_block: false,
 
 			flag_stratum: false,
 			arg_stratum_interface: "local".to_owned(),
@@ -1559,6 +1602,7 @@ mod tests {
 			arg_whisper_pool_size: 20,
 
 			// -- Legacy Options
+			flag_warp: false,
 			flag_geth: false,
 			flag_testnet: false,
 			flag_import_geth_keys: false,
@@ -1611,11 +1655,17 @@ mod tests {
 		let config1 = Args::parse_config(include_str!("./tests/config.invalid1.toml"));
 		let config2 = Args::parse_config(include_str!("./tests/config.invalid2.toml"));
 		let config3 = Args::parse_config(include_str!("./tests/config.invalid3.toml"));
+		let config4 = Args::parse_config(include_str!("./tests/config.invalid4.toml"));
 
-		match (config1, config2, config3) {
-			(Err(ArgsError::Decode(_)), Err(ArgsError::Decode(_)), Err(ArgsError::Decode(_))) => {},
-			(a, b, c) => {
-				assert!(false, "Got invalid error types: {:?}, {:?}, {:?}", a, b, c);
+		match (config1, config2, config3, config4) {
+			(
+				Err(ArgsError::Decode(_)),
+				Err(ArgsError::Decode(_)),
+				Err(ArgsError::Decode(_)),
+				Err(ArgsError::Decode(_)),
+			) => {},
+			(a, b, c, d) => {
+				assert!(false, "Got invalid error types: {:?}, {:?}, {:?}, {:?}", a, b, c, d);
 			}
 		}
 	}
@@ -1646,6 +1696,7 @@ mod tests {
 				unlock: Some(vec!["0x1".into(), "0x2".into(), "0x3".into()]),
 				password: Some(vec!["passwdfile path".into()]),
 				keys_iterations: None,
+				refresh_time: None,
 				disable_hardware: None,
 				fast_unlock: None,
 			}),
@@ -1711,6 +1762,7 @@ mod tests {
 				disable: None,
 				disable_http: None,
 				disable_acl_check: None,
+				service_contract: None,
 				self_secret: None,
 				admin_public: None,
 				nodes: None,
@@ -1738,6 +1790,7 @@ mod tests {
 				work_queue_size: None,
 				relay_set: None,
 				min_gas_price: None,
+				gas_price_percentile: None,
 				usd_per_tx: None,
 				usd_per_eth: None,
 				price_update_period: Some("hourly".into()),
@@ -1755,6 +1808,7 @@ mod tests {
 				remove_solved: None,
 				notify_work: None,
 				refuse_service_transactions: None,
+				infinite_pending_block: None,
 			}),
 			footprint: Some(Footprint {
 				tracing: Some("on".into()),
@@ -1763,7 +1817,7 @@ mod tests {
 				pruning_memory: None,
 				fast_and_loose: None,
 				cache_size: None,
-				cache_size_db: Some(128),
+				cache_size_db: Some(256),
 				cache_size_blocks: Some(16),
 				cache_size_queue: Some(100),
 				cache_size_state: Some(25),

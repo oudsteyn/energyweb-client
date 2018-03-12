@@ -35,9 +35,6 @@ pub enum ContractCreateResult {
 	/// Returned when contract creation failed.
 	/// VM doesn't have to know the reason.
 	Failed,
-	/// Returned when contract creation failed.
-	/// VM doesn't have to know the reason.
-	FailedInStaticCall,
 	/// Reverted with REVERT.
 	Reverted(U256, ReturnData),
 }
@@ -99,7 +96,6 @@ pub trait Ext {
 	/// Returns Err, if we run out of gas.
 	/// Otherwise returns call_result which contains gas left
 	/// and true if subcall was successfull.
-	#[cfg_attr(feature="dev", allow(too_many_arguments))]
 	fn call(&mut self,
 		gas: &U256,
 		sender_address: &Address,

@@ -47,7 +47,8 @@ use log_entry::LocalizedLogEntry;
 use receipt::{Receipt, LocalizedReceipt, TransactionOutcome};
 use blockchain::extras::BlockReceipts;
 use error::{ImportResult, Error as EthcoreError};
-use evm::{Factory as EvmFactory, VMType};
+use evm::VMType;
+use factory::VmFactory;
 use vm::Schedule;
 use miner::{Miner, MinerService, TransactionImportResult};
 use spec::Spec;
@@ -98,7 +99,7 @@ pub struct TestBlockChainClient {
 	/// Spec
 	pub spec: Spec,
 	/// VM Factory
-	pub vm_factory: EvmFactory,
+	pub vm_factory: VmFactory,
 	/// Timestamp assigned to latest sealed block
 	pub latest_block_timestamp: RwLock<u64>,
 	/// Ancient block info.
@@ -169,7 +170,7 @@ impl TestBlockChainClient {
 			queue_size: AtomicUsize::new(0),
 			miner: Arc::new(Miner::with_spec(&spec)),
 			spec: spec,
-			vm_factory: EvmFactory::new(VMType::Interpreter, 1024 * 1024),
+			vm_factory: VmFactory::new(VMType::Interpreter, 1024 * 1024),
 			latest_block_timestamp: RwLock::new(10_000_000),
 			ancient_block: RwLock::new(None),
 			first_block: RwLock::new(None),
@@ -365,6 +366,8 @@ pub fn get_temp_state_db() -> GuardedTempResult<StateDB> {
 }
 
 impl MiningBlockChainClient for TestBlockChainClient {
+	fn as_block_chain_client(&self) -> &BlockChainClient { self }
+
 	fn latest_schedule(&self) -> Schedule {
 		Schedule::new_post_eip150(24576, true, true, true)
 	}
@@ -397,7 +400,7 @@ impl MiningBlockChainClient for TestBlockChainClient {
 		block.reopen(&*self.spec.engine)
 	}
 
-	fn vm_factory(&self) -> &EvmFactory {
+	fn vm_factory(&self) -> &VmFactory {
 		&self.vm_factory
 	}
 
