@@ -1,4 +1,4 @@
-## Parity [v1.8.5](https://github.com/paritytech/parity/releases/tag/v1.8.5) (2017-12-29)
+# Parity [v1.8.5](https://github.com/paritytech/parity/releases/tag/v1.8.5) (2017-12-29)
 
 Parity 1.8.5 changes the default behavior of JSON-RPC CORS setting, detects same-key engine signers in Aura networks, and updates bootnodes for the Kovan and Foundation networks.
 
@@ -356,7 +356,6 @@ The full list of included changes:
 - Refactor --allow-ips to handle custom ip-ranges [#6144](https://github.com/paritytech/parity/pull/6144)
 - Update Changelog for 1.6.10 and 1.7.0 [#6183](https://github.com/paritytech/parity/pull/6183)
 - Fix unsoundness in ethash's unsafe code [#6140](https://github.com/paritytech/parity/pull/6140)
-
 
 ### Previous releases
 

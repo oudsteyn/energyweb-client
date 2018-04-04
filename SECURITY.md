@@ -9,7 +9,7 @@ If you send a report, we will respond to the e-mail within 48 hours, and provide
 If you would like to encrypt your report, please use the PGP key provided below.
 It is also reproduced [on MIT's key server](https://pgp.mit.edu/pks/lookup?op=get&search=0x5D0F03018D07DE73)
 
-```
+```Public Key
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQENBFlyIAwBCACe0keNPjgYzZ1Oy/8t3zj/Qw9bHHqrzx7FWy8NbXnYBM19NqOZ
@@ -45,10 +45,10 @@ ETBD1Q==
 
 Important Legal Information:
 
-Your submission might be eligible for a bug bounty. The bug bounty program is an experimental and discretionary rewards program for the Parity community to reward those who are helping to improve the Parity software. Rewards are at the sole discretion of Parity Technologies Ltd.. 
+Your submission might be eligible for a bug bounty. The bug bounty program is an experimental and discretionary rewards program for the Parity community to reward those who are helping to improve the Parity software. Rewards are at the sole discretion of Parity Technologies Ltd..
 
-We are not able to issue rewards to individuals who are on sanctions lists or who are in countries on sanctions lists (e.g. North Korea, Iran, etc). 
+We are not able to issue rewards to individuals who are on sanctions lists or who are in countries on sanctions lists (e.g. North Korea, Iran, etc).
 
-You are responsible for all taxes. All rewards are subject to applicable law. 
+You are responsible for all taxes. All rewards are subject to applicable law.
 
 Finally, your testing must not violate any law or compromise any data that is not yours.
